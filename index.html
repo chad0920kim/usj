@@ -680,7 +680,7 @@
             document.getElementById('sendBtn').textContent = '전송중...';
             
             addMessage(message, 'user');
-            updateQuickQuestions(message);
+            updateQuickQuestions(message); // 사용자 질문 시에만 업데이트
             
             if (isMobile()) {
                 input.blur();
