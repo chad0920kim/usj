@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USJ 유니버셜스튜디오 챗봇 테스트</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .chat-container {
+            width: 90%;
+            max-width: 800px;
+            height: 80vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .chat-header h1 {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .chat-header .subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+        
+        .status-info {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .message.user {
+            align-items: flex-end;
+        }
+        
+        .message.bot {
+            align-items: flex-start;
+        }
+        
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+        
+        .message.user .message-content {
+            background: #007bff;
+            color: white;
+        }
+        
+        .message.bot .message-content {
+            background: white;
+            color: #333;
+            border: 1px solid #e9ecef;
+        }
+        
+        .message-time {
+            font-size: 0.7rem;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+        
+        .chat-input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .chat-input-row {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        .chat-input:focus {
+            border-color: #007bff;
+        }
+        
+        .send-btn {
+            padding: 12px 24px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .send-btn:hover:not(:disabled) {
+            background: #0056b3;
+        }
+        
+        .send-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .quick-questions {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .quick-btn {
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .quick-btn:hover {
+            background: #e9ecef;
+            transform: translateY(-1px);
+        }
+        
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 5px;
+            color: #6c757d;
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+        
+        .typing-dots {
+            display: flex;
+            gap: 3px;
+        }
+        
+        .typing-dots span {
+            width: 6px;
+            height: 6px;
+            background: #6c757d;
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes typing {
+            0%, 80%, 100% {
+                transform: scale(0);
+            }
+            40% {
+                transform: scale(1);
+            }
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .usj-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+
+        /* 피드백 버튼 스타일 개선 */
+        .feedback-buttons button {
+            margin: 0 5px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .feedback-buttons button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="status-info" id="statusInfo">연결 대기중</div>
+            <h1>🎢 USJ 유니버셜스튜디오 챗봇 <span class="usj-badge">전용</span></h1>
+            <div class="subtitle">유니버셜스튜디오 재팬 관련 정보를 문의해보세요!</div>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot">
+                <div class="message-content">
+                    안녕하세요! 🎢 USJ 유니버셜스튜디오 재팬 전문 상담 챗봇입니다.<br><br>
+                    다음과 같은 정보를 도움드릴 수 있어요:
+                    <ul style="margin-top: 10px; padding-left: 20px;">
+                        <li>🎫 USJ 티켓 예약 및 가격</li>
+                        <li>⚡ 익스프레스패스 종류와 혜택</li>
+                        <li>🏰 해리포터 구역 정보</li>
+                        <li>🎮 닌텐도월드 어트랙션</li>
+                        <li>👻 할로윈 호러 나이트</li>
+                        <li>🚗 미니언 파크</li>
+                    </ul>
+                    <br>궁금한 것을 편하게 물어보세요!
+                </div>
+                <div class="message-time" id="botTime"></div>
+            </div>
+        </div>
+        
+        <div class="chat-input-container">
+            <div class="quick-questions">
+                <button class="quick-btn" onclick="sendQuickQuestion('USJ 익스프레스패스 가격')">익스프레스패스 가격</button>
+                <button class="quick-btn" onclick="sendQuickQuestion('해리포터 구역 예약 방법')">해리포터 예약</button>
+                <button class="quick-btn" onclick="sendQuickQuestion('닌텐도월드 어트랙션')">닌텐도월드</button>
+                <button class="quick-btn" onclick="sendQuickQuestion('USJ 할로윈 이벤트')">할로윈 이벤트</button>
+            </div>
+            
+            <div class="typing-indicator" id="typingIndicator">
+                <span>USJ 정보 검색중</span>
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+            
+            <div class="chat-input-row">
+                <input type="text" 
+                       class="chat-input" 
+                       id="messageInput" 
+                       placeholder="USJ 관련 질문을 입력하세요... (예: 티켓 예약, 익스프레스패스)" 
+                       autocomplete="off">
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()">전송</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chatId = null;
+        let isProcessing = false;
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', async function() {
+            await generateChatId();
+            updateStatus('연결됨', '#28a745');
+            updateBotTime();
+            
+            // Enter 키 이벤트
+            document.getElementById('messageInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !isProcessing) {
+                    sendMessage();
+                }
+            });
+        });
+
+        async function generateChatId() {
+            try {
+                const response = await fetch('http://localhost:8001/generate-chat-id');
+                const data = await response.json();
+                chatId = data.chat_id;
+                console.log('USJ Chat ID 생성:', chatId);
+                updateStatus(`연결됨 (${chatId})`, '#28a745');
+            } catch (error) {
+                console.error('Chat ID 생성 실패:', error);
+                updateStatus('연결 실패', '#dc3545');
+            }
+        }
+
+        function updateStatus(text, color = '#6c757d') {
+            const statusInfo = document.getElementById('statusInfo');
+            statusInfo.textContent = text;
+            statusInfo.style.color = color;
+        }
+
+        function updateBotTime() {
+            const now = new Date();
+            document.getElementById('botTime').textContent = 
+                now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function sendQuickQuestion(question) {
+            document.getElementById('messageInput').value = question;
+            sendMessage();
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (!message || isProcessing) return;
+            
+            isProcessing = true;
+            input.value = '';
+            
+            // 사용자 메시지 추가
+            addMessage(message, 'user');
+            
+            // UI 상태 업데이트
+            updateSendButton(true);
+            showTypingIndicator(true);
+            
+            try {
+                const response = await fetch('http://localhost:8001/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        chat_id: chatId
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                // SSE 스트림 처리
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let botMessageElement = null;
+                let fullResponse = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const data = line.slice(6).trim();
+                            
+                            if (data === '[DONE]') {
+                                continue;
+                            }
+
+                            try {
+                                const parsed = JSON.parse(data);
+                                const content = parsed.choices?.[0]?.delta?.content || '';
+                                
+                                if (content) {
+                                    if (!botMessageElement) {
+                                        botMessageElement = addMessage('', 'bot');
+                                        showTypingIndicator(false);
+                                    }
+                                    
+                                    fullResponse += content;
+                                    
+                                    // HTML 타입 확인 (피드백 버튼)
+                                    if (parsed.choices?.[0]?.delta?.type === 'html') {
+                                        botMessageElement.querySelector('.message-content').innerHTML = fullResponse;
+                                    } else {
+                                        botMessageElement.querySelector('.message-content').textContent = fullResponse;
+                                    }
+                                    
+                                    // 스크롤을 아래로
+                                    scrollToBottom();
+                                }
+                            } catch (parseError) {
+                                console.warn('JSON 파싱 오류:', parseError);
+                            }
+                        }
+                    }
+                }
+
+                updateStatus(`응답 완료 (${chatId})`, '#28a745');
+
+            } catch (error) {
+                console.error('메시지 전송 오류:', error);
+                showErrorMessage('USJ 서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.');
+                updateStatus('오류 발생', '#dc3545');
+            } finally {
+                isProcessing = false;
+                updateSendButton(false);
+                showTypingIndicator(false);
+            }
+        }
+
+        function addMessage(content, type) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+            
+            messageDiv.innerHTML = `
+                <div class="message-content">${content}</div>
+                <div class="message-time">${timeString}</div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+            
+            return messageDiv;
+        }
+
+        function showErrorMessage(message) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            messagesContainer.appendChild(errorDiv);
+            scrollToBottom();
+        }
+
+        function updateSendButton(disabled) {
+            const sendBtn = document.getElementById('sendBtn');
+            sendBtn.disabled = disabled;
+            sendBtn.textContent = disabled ? '전송중...' : '전송';
+        }
+
+        function showTypingIndicator(show) {
+            const indicator = document.getElementById('typingIndicator');
+            indicator.style.display = show ? 'flex' : 'none';
+            if (show) scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            const messagesContainer = document.getElementById('chatMessages');
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // 피드백 전송 함수 (전역)
+        window.sendFeedback = async function(type, feedbackChatId) {
+            try {
+                const response = await fetch(`http://localhost:8001/feedback-simple?chat_id=${feedbackChatId}&type=${type}`);
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    console.log('USJ 피드백 전송 완료:', result);
+                    // 버튼 비활성화는 하지 않음 (여러 번 피드백 가능)
+                } else {
+                    console.error('USJ 피드백 전송 실패:', result);
+                }
+            } catch (error) {
+                console.error('USJ 피드백 전송 오류:', error);
+            }
+        };
+
+        // 연결 상태 주기적 확인
+        setInterval(async () => {
+            try {
+                const response = await fetch('http://localhost:8001/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status === 'healthy') {
+                        updateStatus(`정상 운영중 (${chatId})`, '#28a745');
+                    }
+                } else {
+                    updateStatus('서버 불안정', '#ffc107');
+                }
+            } catch (error) {
+                updateStatus('연결 끊김', '#dc3545');
+            }
+        }, 30000); // 30초마다 확인
+    </script>
+</body>
+</html>
