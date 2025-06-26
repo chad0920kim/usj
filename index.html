@@ -16,6 +16,7 @@
             align-items: center;
         }
         
+        /* PC 버전 기본 스타일 */
         .chat-container {
             width: 90%;
             max-width: 800px;
@@ -33,6 +34,16 @@
             color: white;
             padding: 20px;
             text-align: center;
+        }
+        
+        .chat-header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+        
+        .chat-header .subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
         }
         
         .chat-messages {
@@ -97,6 +108,7 @@
             border: none;
             border-radius: 25px;
             cursor: pointer;
+            font-size: 1rem;
         }
         
         .send-btn:disabled {
@@ -120,6 +132,11 @@
             cursor: pointer;
             white-space: nowrap;
             min-width: fit-content;
+            transition: background-color 0.2s;
+        }
+        
+        .quick-btn:hover {
+            background: #e9ecef;
         }
         
         .error-message {
@@ -129,13 +146,161 @@
             border-radius: 10px;
             margin-bottom: 10px;
         }
+        
+        /* 모바일 전용 스타일 */
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
+                align-items: stretch;
+            }
+            
+            .chat-container {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+                max-width: none;
+                box-shadow: none;
+            }
+            
+            .chat-header {
+                padding: 15px 20px;
+                position: relative;
+            }
+            
+            .chat-header h1 {
+                font-size: 1.3rem;
+            }
+            
+            .chat-header .subtitle {
+                font-size: 0.8rem;
+            }
+            
+            .chat-messages {
+                padding: 15px;
+                /* 모바일에서 키보드가 올라와도 스크롤 가능하도록 */
+                padding-bottom: 20px;
+            }
+            
+            .message-content {
+                max-width: 85%;
+                padding: 10px 14px;
+                font-size: 0.9rem;
+            }
+            
+            .chat-input-container {
+                padding: 15px;
+                /* 모바일 키보드 대응 */
+                position: sticky;
+                bottom: 0;
+                background: white;
+                border-top: 2px solid #e9ecef;
+            }
+            
+            .quick-questions {
+                gap: 6px;
+                margin-bottom: 12px;
+            }
+            
+            .quick-btn {
+                padding: 10px 12px;
+                font-size: 0.75rem;
+                border-radius: 20px;
+                /* 모바일에서 긴 텍스트는 줄바꿈 허용 */
+                white-space: normal;
+                text-align: center;
+                min-height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex: 1;
+                min-width: 0;
+            }
+            
+            .chat-input {
+                padding: 14px 16px;
+                font-size: 16px; /* iOS 줌 방지 */
+                border-radius: 20px;
+            }
+            
+            .send-btn {
+                padding: 14px 20px;
+                font-size: 0.9rem;
+                border-radius: 20px;
+                min-width: 60px;
+            }
+            
+            .chat-input-row {
+                gap: 8px;
+            }
+        }
+        
+        /* 아주 작은 모바일 (iPhone SE 등) */
+        @media (max-width: 375px) {
+            .chat-header {
+                padding: 12px 15px;
+            }
+            
+            .chat-header h1 {
+                font-size: 1.2rem;
+            }
+            
+            .chat-messages {
+                padding: 12px;
+            }
+            
+            .chat-input-container {
+                padding: 12px;
+            }
+            
+            .quick-btn {
+                font-size: 0.7rem;
+                padding: 8px 10px;
+                min-height: 36px;
+            }
+            
+            .send-btn {
+                padding: 12px 16px;
+                min-width: 55px;
+            }
+        }
+        
+        /* 태블릿 */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .chat-container {
+                width: 85%;
+                max-width: 700px;
+            }
+            
+            .quick-btn {
+                font-size: 0.85rem;
+            }
+        }
+        
+        /* 스크롤바 스타일링 (webkit 브라우저) */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
     </style>
 </head>
 <body>
     <div class="chat-container">
         <div class="chat-header">
             <h1>🎢 USJ 챗봇</h1>
-            <div>유니버셜스튜디오 재팬 전문 상담</div>
+            <div class="subtitle">유니버셜스튜디오 재팬 전문 상담</div>
         </div>
         
         <div class="chat-messages" id="chatMessages">
@@ -163,10 +328,31 @@
     </div>
 
     <script>
+        // 디바이스 감지
+        function isMobile() {
+            return window.innerWidth <= 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+        
         // 심플한 설정
         const API_URL = 'https://usj-chatbot.run.goorm.site';
         let chatId = 'user_' + Date.now();
         let isProcessing = false;
+        
+        // 디바이스별 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            if (isMobile()) {
+                console.log('📱 모바일 디바이스 감지');
+                // 모바일 전용 최적화
+                document.body.style.overflow = 'hidden';
+                
+                // iOS Safari 주소창 숨김 대응
+                setTimeout(() => {
+                    window.scrollTo(0, 1);
+                }, 100);
+            } else {
+                console.log('💻 데스크톱 디바이스 감지');
+            }
+        });
 
         // 빠른 질문
         function sendQuick(question) {
@@ -195,6 +381,11 @@
             
             // 사용자 메시지 추가
             addMessage(message, 'user');
+            
+            // 모바일에서 키보드 숨기기
+            if (isMobile()) {
+                input.blur();
+            }
             
             try {
                 const response = await fetch(`${API_URL}/chat`, {
@@ -226,12 +417,12 @@
                                 if (content) {
                                     fullResponse += content;
                                     
-                                    // ※ 문구 앞에 빈 줄 추가 처리
+                                    // ※ 문구 앞에 빈 줄 2개 추가 처리
                                     let displayText = fullResponse;
                                     if (displayText.includes('※ 이 답변은 AI가 안내한 내용으로')) {
                                         displayText = displayText.replace(
                                             '※ 이 답변은 AI가 안내한 내용으로', 
-                                            '\n※ 이 답변은 AI가 안내한 내용으로'
+                                            '\n\n※ 이 답변은 AI가 안내한 내용으로'
                                         );
                                     }
                                     
@@ -269,6 +460,24 @@
             div.textContent = message;
             messages.appendChild(div);
             messages.scrollTop = messages.scrollHeight;
+        }
+        
+        // 화면 크기 변경 감지
+        window.addEventListener('resize', function() {
+            // 스크롤 위치 유지
+            const messages = document.getElementById('chatMessages');
+            messages.scrollTop = messages.scrollHeight;
+        });
+        
+        // 모바일 키보드 대응
+        if (isMobile()) {
+            window.addEventListener('resize', function() {
+                // 키보드가 올라오면 스크롤 조정
+                setTimeout(() => {
+                    const messages = document.getElementById('chatMessages');
+                    messages.scrollTop = messages.scrollHeight;
+                }, 300);
+            });
         }
     </script>
 </body>
