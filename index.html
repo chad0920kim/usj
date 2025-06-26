@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USJ 챗봇 MRK8</title>
+    <title>USJ 챗봇 MRK9</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -313,7 +313,7 @@
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <h1>🎢 USJ 챗봇 MRK8</h1>
+            <h1>🎢 USJ 챗봇 MRK9</h1>
             <div class="subtitle">유니버셜스튜디오 재팬 전문 상담</div>
         </div>
         
@@ -359,21 +359,52 @@
         // TXT 파일에서 질문 로드
         async function loadQuestions() {
             try {
+                console.log('질문 파일 로드 시도 중...');
                 const response = await fetch('./USJ_Q.TXT');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
                 const text = await response.text();
+                console.log('파일 내용:', text.substring(0, 100) + '...');
+                
                 usjQuestions = text.split('\n')
                     .map(q => q.trim())
                     .filter(q => q.length > 0);
+                
+                console.log(`${usjQuestions.length}개 질문 로드됨`);
                 
                 // 초기 질문 설정
                 updateQuickQuestions();
             } catch (error) {
                 console.error('질문 파일 로드 실패:', error);
-                // 기본 질문으로 폴백
+                
+                // 기본 질문으로 폴백 (더 많은 기본 질문 추가)
                 usjQuestions = [
                     "USJ 입장 시 캐리어를 맡길 수 있는 곳이 있나요?",
-                    "USJ에서 당일 입장권도 구매할 수 있나요?"
+                    "USJ에서 당일 입장권도 구매할 수 있나요?",
+                    "USJ에서 마리오 카트 어트랙션은 얼마나 기다려야 하나요?",
+                    "USJ 해리포터 구역은 입장 제한이 있나요?",
+                    "USJ에서 어린이와 함께하기 좋은 어트랙션은 어떤 게 있나요?",
+                    "USJ 내 식당은 대기 시간이 얼마나 되나요?",
+                    "유니버설 시티역에서 USJ까지 걸어서 얼마나 걸리나요?",
+                    "USJ 안에 물을 무료로 마실 수 있는 장소가 있나요?",
+                    "USJ에서 분실물을 잃어버리면 어떻게 하나요?",
+                    "USJ 근처에서 캐릭터 상품만 따로 구매할 수 있나요?",
+                    "USJ 닌텐도 월드 입장 확약권은 어떻게 받나요?",
+                    "USJ에서 사진 촬영 제한 구역이 있나요?",
+                    "USJ 굿즈는 재입고가 자주 되나요?",
+                    "USJ 안에서 휴대폰 충전 가능한가요?",
+                    "USJ 퍼레이드는 어떤 시간에 하나요?",
+                    "USJ 입장 줄이 가장 짧은 시간대는 언제인가요?",
+                    "USJ 입장권과 익스프레스 패스를 같은 날에 사도 되나요?",
+                    "USJ에서 한 번 나갔다가 다시 입장할 수 있나요?",
+                    "USJ에서 영어로만 여행해도 불편하지 않을까요?",
+                    "USJ는 혼자가도 재미있을까요?"
                 ];
+                
+                console.log(`기본 질문 ${usjQuestions.length}개로 폴백`);
                 updateQuickQuestions();
             }
         }
