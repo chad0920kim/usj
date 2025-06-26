@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USJ 챗봇 MRK9</title>
+    <title>USJ 챗봇 MRK10</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -313,7 +313,7 @@
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <h1>🎢 USJ 챗봇 MRK9</h1>
+            <h1>🎢 USJ 챗봇 MRK10</h1>
             <div class="subtitle">유니버셜스튜디오 재팬 전문 상담</div>
         </div>
         
@@ -360,7 +360,7 @@
         async function loadQuestions() {
             try {
                 console.log('질문 파일 로드 시도 중...');
-                const response = await fetch('./USJ_Q.TXT');
+                const response = await fetch('./usj_q.txt');
                 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
