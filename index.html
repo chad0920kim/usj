@@ -3,16 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USJ 유니버셜스튜디오 챗봇</title>
+    <title>USJ 챗봇</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
@@ -37,34 +33,6 @@
             color: white;
             padding: 20px;
             text-align: center;
-            position: relative;
-        }
-        
-        .chat-header h1 {
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-        
-        .chat-header .subtitle {
-            font-size: 0.9rem;
-            opacity: 0.9;
-            margin-top: 5px;
-        }
-        
-        .status-info {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 0.8rem;
-            opacity: 0.8;
-        }
-        
-        .url-info {
-            position: absolute;
-            top: 10px;
-            left: 15px;
-            font-size: 0.7rem;
-            opacity: 0.7;
         }
         
         .chat-messages {
@@ -80,13 +48,8 @@
             flex-direction: column;
         }
         
-        .message.user {
-            align-items: flex-end;
-        }
-        
-        .message.bot {
-            align-items: flex-start;
-        }
+        .message.user { align-items: flex-end; }
+        .message.bot { align-items: flex-start; }
         
         .message-content {
             max-width: 70%;
@@ -107,12 +70,6 @@
             border: 1px solid #e9ecef;
         }
         
-        .message-time {
-            font-size: 0.7rem;
-            color: #6c757d;
-            margin-top: 4px;
-        }
-        
         .chat-input-container {
             padding: 20px;
             background: white;
@@ -131,11 +88,6 @@
             border-radius: 25px;
             font-size: 1rem;
             outline: none;
-            transition: border-color 0.3s;
-        }
-        
-        .chat-input:focus {
-            border-color: #007bff;
         }
         
         .send-btn {
@@ -144,13 +96,7 @@
             color: white;
             border: none;
             border-radius: 25px;
-            font-size: 1rem;
             cursor: pointer;
-            transition: background-color 0.3s;
-        }
-        
-        .send-btn:hover:not(:disabled) {
-            background: #0056b3;
         }
         
         .send-btn:disabled {
@@ -172,46 +118,8 @@
             border-radius: 15px;
             font-size: 0.8rem;
             cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .quick-btn:hover {
-            background: #e9ecef;
-            transform: translateY(-1px);
-        }
-        
-        .typing-indicator {
-            display: none;
-            align-items: center;
-            gap: 5px;
-            color: #6c757d;
-            font-style: italic;
-            margin-bottom: 10px;
-        }
-        
-        .typing-dots {
-            display: flex;
-            gap: 3px;
-        }
-        
-        .typing-dots span {
-            width: 6px;
-            height: 6px;
-            background: #6c757d;
-            border-radius: 50%;
-            animation: typing 1.4s infinite ease-in-out;
-        }
-        
-        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
-        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
-        
-        @keyframes typing {
-            0%, 80%, 100% {
-                transform: scale(0);
-            }
-            40% {
-                transform: scale(1);
-            }
+            white-space: nowrap;
+            min-width: fit-content;
         }
         
         .error-message {
@@ -220,256 +128,87 @@
             padding: 10px;
             border-radius: 10px;
             margin-bottom: 10px;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .usj-badge {
-            display: inline-block;
-            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
-            color: white;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.7rem;
-            font-weight: bold;
-            margin-left: 8px;
-        }
-        
-        .connection-status {
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            font-size: 0.9rem;
-        }
-        
-        .connection-status.testing {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            color: #856404;
-        }
-        
-        .connection-status.success {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-        }
-        
-        .connection-status.failed {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
         }
     </style>
 </head>
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <div class="url-info" id="urlInfo">포트 80</div>
-            <div class="status-info" id="statusInfo">연결 대기중</div>
-            <h1>🎢 USJ 유니버셜스튜디오 챗봇 <span class="usj-badge">전용</span></h1>
-            <div class="subtitle">유니버셜스튜디오 재팬 관련 정보를 문의해보세요!</div>
+            <h1>🎢 USJ 챗봇</h1>
+            <div>유니버셜스튜디오 재팬 전문 상담</div>
         </div>
         
         <div class="chat-messages" id="chatMessages">
-            <div class="connection-status testing" id="connectionStatus">
-                🔄 서버 연결을 확인하고 있습니다...
-            </div>
-            
             <div class="message bot">
                 <div class="message-content">
-                    안녕하세요! 🎢 USJ 유니버셜스튜디오 재팬 전문 상담 챗봇입니다.<br><br>
-                    다음과 같은 정보를 도움드릴 수 있어요:
-                    <ul style="margin-top: 10px; padding-left: 20px;">
-                        <li>🎫 USJ 티켓 예약 및 가격</li>
-                        <li>⚡ 익스프레스패스 종류와 혜택</li>
-                        <li>🏰 해리포터 구역 정보</li>
-                        <li>🎮 닌텐도월드 어트랙션</li>
-                        <li>👻 할로윈 호러 나이트</li>
-                        <li>🚗 미니언 파크</li>
-                    </ul>
-                    <br>궁금한 것을 편하게 물어보세요!
+                    안녕하세요! USJ 전문 상담 챗봇입니다.<br>
+                    티켓 예약, 익스프레스패스, 어트랙션 정보 등을 도움드려요!
                 </div>
-                <div class="message-time" id="botTime"></div>
             </div>
         </div>
         
         <div class="chat-input-container">
             <div class="quick-questions">
-                <button class="quick-btn" onclick="sendQuickQuestion('USJ 익스프레스패스 가격')">익스프레스패스 가격</button>
-                <button class="quick-btn" onclick="sendQuickQuestion('해리포터 구역 예약 방법')">해리포터 예약</button>
-                <button class="quick-btn" onclick="sendQuickQuestion('닌텐도월드 어트랙션')">닌텐도월드</button>
-                <button class="quick-btn" onclick="sendQuickQuestion('USJ 할로윈 이벤트')">할로윈 이벤트</button>
-            </div>
-            
-            <div class="typing-indicator" id="typingIndicator">
-                <span>USJ 정보 검색중</span>
-                <div class="typing-dots">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </div>
+                <button class="quick-btn" onclick="sendQuick('USJ 입장 시 캐리어를 맡길 수 있는 곳이 있나요?')">캐리어 보관</button>
+                <button class="quick-btn" onclick="sendQuick('USJ에서 당일 입장권도 구매할 수 있나요?')">당일 티켓 구매</button>
             </div>
             
             <div class="chat-input-row">
-                <input type="text" 
-                       class="chat-input" 
-                       id="messageInput" 
-                       placeholder="USJ 관련 질문을 입력하세요... (예: 티켓 예약, 익스프레스패스)" 
-                       autocomplete="off">
+                <input type="text" class="chat-input" id="messageInput" 
+                       placeholder="USJ 관련 질문을 입력하세요..." 
+                       onkeypress="handleEnter(event)">
                 <button class="send-btn" id="sendBtn" onclick="sendMessage()">전송</button>
             </div>
         </div>
     </div>
 
     <script>
-        // 🔧 포트 80 (기본 HTTP 포트) 사용 - 포트 번호 생략 가능
-        const API_BASE_URL = 'https://usj-chatbot.run.goorm.site';
-        
-        let chatId = null;
+        // 심플한 설정
+        const API_URL = 'https://usj-chatbot.run.goorm.site';
+        let chatId = 'user_' + Date.now();
         let isProcessing = false;
 
-        // 초기화
-        document.addEventListener('DOMContentLoaded', async function() {
-            updateBotTime();
-            await testConnection();
-            
-            // Enter 키 이벤트
-            document.getElementById('messageInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter' && !isProcessing) {
-                    sendMessage();
-                }
-            });
-        });
-
-        async function testConnection() {
-            const connectionStatus = document.getElementById('connectionStatus');
-            const urlInfo = document.getElementById('urlInfo');
-            
-            try {
-                connectionStatus.innerHTML = `🔄 서버 연결 테스트 중...<br>URL: ${API_BASE_URL}`;
-                
-                console.log(`API 연결 테스트: ${API_BASE_URL}`);
-                
-                const response = await fetch(`${API_BASE_URL}/health`, {
-                    method: 'GET',
-                    signal: AbortSignal.timeout(5000) // 5초 타임아웃
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.status === 'healthy' && data.service === 'usj') {
-                        connectionStatus.innerHTML = `✅ 서버 연결 성공!<br>포트 80 (HTTP 기본 포트)`;
-                        connectionStatus.className = 'connection-status success';
-                        
-                        urlInfo.textContent = API_BASE_URL;
-                        updateStatus('연결됨', '#28a745');
-                        
-                        await generateChatId();
-                        hideConnectionStatus();
-                        
-                        console.log('✅ USJ 서버 연결 성공');
-                        return;
-                    }
-                }
-                
-                throw new Error(`서버 응답 오류: ${response.status}`);
-                
-            } catch (error) {
-                console.error('❌ 서버 연결 실패:', error);
-                
-                connectionStatus.innerHTML = `❌ 서버 연결 실패<br>
-                    오류: ${error.message}<br>
-                    서버가 포트 80에서 실행 중인지 확인해주세요.`;
-                connectionStatus.className = 'connection-status failed';
-                
-                updateStatus('연결 실패', '#dc3545');
-                urlInfo.textContent = '연결 실패';
-            }
-        }
-
-        function hideConnectionStatus() {
-            setTimeout(() => {
-                const connectionStatus = document.getElementById('connectionStatus');
-                connectionStatus.style.display = 'none';
-            }, 3000);
-        }
-
-        async function generateChatId() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/generate-chat-id`);
-                const data = await response.json();
-                chatId = data.chat_id;
-                console.log('USJ Chat ID 생성:', chatId);
-                updateStatus(`연결됨 (${chatId})`, '#28a745');
-            } catch (error) {
-                console.error('Chat ID 생성 실패:', error);
-                updateStatus('Chat ID 생성 실패', '#dc3545');
-            }
-        }
-
-        function updateStatus(text, color = '#6c757d') {
-            const statusInfo = document.getElementById('statusInfo');
-            statusInfo.textContent = text;
-            statusInfo.style.color = color;
-        }
-
-        function updateBotTime() {
-            const now = new Date();
-            document.getElementById('botTime').textContent = 
-                now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-        }
-
-        function sendQuickQuestion(question) {
-            if (!chatId) {
-                alert('서버 연결이 완료되지 않았습니다. 잠시 후 다시 시도해주세요.');
-                return;
-            }
+        // 빠른 질문
+        function sendQuick(question) {
             document.getElementById('messageInput').value = question;
             sendMessage();
         }
 
-        async function sendMessage() {
-            if (!chatId) {
-                showErrorMessage('서버 연결이 완료되지 않았습니다. 페이지를 새로고침해주세요.');
-                return;
+        // 엔터키 처리
+        function handleEnter(event) {
+            if (event.key === 'Enter' && !isProcessing) {
+                sendMessage();
             }
+        }
+
+        // 메시지 전송
+        async function sendMessage() {
+            if (isProcessing) return;
             
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
-            
-            if (!message || isProcessing) return;
+            if (!message) return;
             
             isProcessing = true;
             input.value = '';
+            document.getElementById('sendBtn').textContent = '전송중...';
             
             // 사용자 메시지 추가
             addMessage(message, 'user');
             
-            // UI 상태 업데이트
-            updateSendButton(true);
-            showTypingIndicator(true);
-            
             try {
-                console.log(`메시지 전송: ${API_BASE_URL}/chat`);
-                
-                const response = await fetch(`${API_BASE_URL}/chat`, {
+                const response = await fetch(`${API_URL}/chat`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        message: message,
-                        chat_id: chatId
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message, chat_id: chatId })
                 });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+                if (!response.ok) throw new Error('서버 오류');
 
-                // SSE 스트림 처리
+                // 스트림 처리
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
-                let botMessageElement = null;
+                let botMessage = addMessage('', 'bot');
                 let fullResponse = '';
 
                 while (true) {
@@ -480,110 +219,47 @@
                     const lines = chunk.split('\n');
 
                     for (const line of lines) {
-                        if (line.startsWith('data: ')) {
-                            const data = line.slice(6).trim();
-                            
-                            if (data === '[DONE]') {
-                                continue;
-                            }
-
+                        if (line.startsWith('data: ') && !line.includes('[DONE]')) {
                             try {
-                                const parsed = JSON.parse(data);
-                                const content = parsed.choices?.[0]?.delta?.content || '';
-                                
+                                const data = JSON.parse(line.slice(6));
+                                const content = data.choices?.[0]?.delta?.content || '';
                                 if (content) {
-                                    if (!botMessageElement) {
-                                        botMessageElement = addMessage('', 'bot');
-                                        showTypingIndicator(false);
-                                    }
-                                    
                                     fullResponse += content;
-                                    botMessageElement.querySelector('.message-content').textContent = fullResponse;
-                                    scrollToBottom();
+                                    botMessage.querySelector('.message-content').textContent = fullResponse;
                                 }
-                            } catch (parseError) {
-                                console.warn('JSON 파싱 오류:', parseError);
-                            }
+                            } catch (e) {}
                         }
                     }
                 }
 
-                updateStatus(`응답 완료 (${chatId})`, '#28a745');
-
             } catch (error) {
-                console.error('메시지 전송 오류:', error);
-                showErrorMessage(`서버 연결 오류: ${error.message}`);
-                updateStatus('오류 발생', '#dc3545');
+                showError('연결 오류: ' + error.message);
             } finally {
                 isProcessing = false;
-                updateSendButton(false);
-                showTypingIndicator(false);
+                document.getElementById('sendBtn').textContent = '전송';
             }
         }
 
+        // 메시지 추가
         function addMessage(content, type) {
-            const messagesContainer = document.getElementById('chatMessages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${type}`;
-            
-            const now = new Date();
-            const timeString = now.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-            
-            messageDiv.innerHTML = `
-                <div class="message-content">${content}</div>
-                <div class="message-time">${timeString}</div>
-            `;
-            
-            messagesContainer.appendChild(messageDiv);
-            scrollToBottom();
-            
-            return messageDiv;
+            const messages = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            div.innerHTML = `<div class="message-content">${content}</div>`;
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+            return div;
         }
 
-        function showErrorMessage(message) {
-            const messagesContainer = document.getElementById('chatMessages');
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error-message';
-            errorDiv.textContent = message;
-            messagesContainer.appendChild(errorDiv);
-            scrollToBottom();
+        // 오류 표시
+        function showError(message) {
+            const messages = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'error-message';
+            div.textContent = message;
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
         }
-
-        function updateSendButton(disabled) {
-            const sendBtn = document.getElementById('sendBtn');
-            sendBtn.disabled = disabled;
-            sendBtn.textContent = disabled ? '전송중...' : '전송';
-        }
-
-        function showTypingIndicator(show) {
-            const indicator = document.getElementById('typingIndicator');
-            indicator.style.display = show ? 'flex' : 'none';
-            if (show) scrollToBottom();
-        }
-
-        function scrollToBottom() {
-            const messagesContainer = document.getElementById('chatMessages');
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-
-        // 연결 상태 주기적 확인
-        setInterval(async () => {
-            if (!chatId) return;
-            
-            try {
-                const response = await fetch(`${API_BASE_URL}/health`);
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.status === 'healthy') {
-                        updateStatus(`정상 운영중 (${chatId})`, '#28a745');
-                    }
-                } else {
-                    updateStatus('서버 불안정', '#ffc107');
-                }
-            } catch (error) {
-                updateStatus('연결 끊김', '#dc3545');
-            }
-        }, 30000); // 30초마다 확인
     </script>
 </body>
 </html>
