@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USJ 유니버셜스튜디오 챗봇 - Goorm IDE</title>
+    <title>USJ 유니버셜스튜디오 챗봇</title>
     <style>
         * {
             margin: 0;
@@ -63,33 +63,8 @@
             position: absolute;
             top: 10px;
             left: 15px;
-            font-size: 0.6rem;
+            font-size: 0.7rem;
             opacity: 0.7;
-            max-width: 40%;
-            word-break: break-all;
-        }
-        
-        .goorm-settings {
-            background: #e3f2fd;
-            border: 1px solid #bbdefb;
-            color: #1565c0;
-            padding: 15px;
-            margin: 15px;
-            border-radius: 10px;
-            font-size: 0.9rem;
-        }
-        
-        .goorm-settings h4 {
-            margin-bottom: 10px;
-            color: #0d47a1;
-        }
-        
-        .goorm-settings ol {
-            margin-left: 20px;
-        }
-        
-        .goorm-settings li {
-            margin-bottom: 5px;
         }
         
         .chat-messages {
@@ -288,32 +263,20 @@
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <div class="url-info" id="urlInfo">연결 확인중...</div>
+            <div class="url-info" id="urlInfo">포트 80</div>
             <div class="status-info" id="statusInfo">연결 대기중</div>
-            <h1>🎢 USJ 챗봇 <span class="usj-badge">Goorm IDE</span></h1>
+            <h1>🎢 USJ 유니버셜스튜디오 챗봇 <span class="usj-badge">전용</span></h1>
             <div class="subtitle">유니버셜스튜디오 재팬 관련 정보를 문의해보세요!</div>
         </div>
         
         <div class="chat-messages" id="chatMessages">
             <div class="connection-status testing" id="connectionStatus">
-                🔄 Goorm IDE 서버 연결을 확인하고 있습니다...
-            </div>
-            
-            <div class="goorm-settings" id="goormSettings" style="display: none;">
-                <h4>🛠️ Goorm IDE 포트 설정이 필요합니다</h4>
-                <ol>
-                    <li>Goorm IDE 대시보드 → 컨테이너 설정 → URL과 포트</li>
-                    <li>포트 8001 추가 및 공개 설정</li>
-                    <li>HTTPS 체크 해제 (HTTP 사용)</li>
-                    <li>서버 재시작 후 새로고침</li>
-                </ol>
-                <p><strong>또는</strong> 상단 "미리보기" → "포트 변경" → 8001 입력</p>
+                🔄 서버 연결을 확인하고 있습니다...
             </div>
             
             <div class="message bot">
                 <div class="message-content">
                     안녕하세요! 🎢 USJ 유니버셜스튜디오 재팬 전문 상담 챗봇입니다.<br><br>
-                    <strong>Goorm IDE 환경에서 실행 중입니다.</strong><br><br>
                     다음과 같은 정보를 도움드릴 수 있어요:
                     <ul style="margin-top: 10px; padding-left: 20px;">
                         <li>🎫 USJ 티켓 예약 및 가격</li>
@@ -358,47 +321,16 @@
     </div>
 
     <script>
-        // 🔧 Goorm IDE용 API URL 자동 감지 및 설정
-        function generateGoormApiUrls() {
-            const currentHost = window.location.hostname;
-            const currentProtocol = window.location.protocol;
-            
-            return [
-                // 현재 호스트 기반 (가장 가능성 높음)
-                `${currentProtocol}//${currentHost}:8001`,
-                `https://${currentHost}:8001`,
-                `http://${currentHost}:8001`,
-                
-                // 일반적인 Goorm IDE 패턴
-                `https://${currentHost.replace(':3000', '')}:8001`,
-                `http://${currentHost.replace(':3000', '')}:8001`,
-                
-                // 로컬 개발용
-                'http://localhost:8001',
-                'http://127.0.0.1:8001',
-                
-                // 포트 없는 버전 (프록시 사용 시)
-                `${currentProtocol}//${currentHost}/api`,
-                `https://${currentHost}/api`,
-                `http://${currentHost}/api`,
-            ];
-        }
+        // 🔧 포트 80 (기본 HTTP 포트) 사용 - 포트 번호 생략 가능
+        const API_BASE_URL = 'https://usj-chatbot.run.goorm.site';
         
-        let API_BASE_URL = null;
         let chatId = null;
         let isProcessing = false;
 
         // 초기화
         document.addEventListener('DOMContentLoaded', async function() {
             updateBotTime();
-            await findGoormApiUrl();
-            
-            if (API_BASE_URL) {
-                await generateChatId();
-                hideConnectionStatus();
-            } else {
-                showGoormSettings();
-            }
+            await testConnection();
             
             // Enter 키 이벤트
             document.getElementById('messageInput').addEventListener('keypress', function(e) {
@@ -408,60 +340,50 @@
             });
         });
 
-        async function findGoormApiUrl() {
-            const urls = generateGoormApiUrls();
+        async function testConnection() {
             const connectionStatus = document.getElementById('connectionStatus');
             const urlInfo = document.getElementById('urlInfo');
             
-            console.log('🔍 Goorm API URL 탐지 시작...');
-            console.log('시도할 URL 목록:', urls);
-            
-            for (let i = 0; i < urls.length; i++) {
-                const url = urls[i];
-                try {
-                    connectionStatus.innerHTML = `🔄 Goorm 서버 연결 테스트 중...<br>(${i + 1}/${urls.length}) ${url}`;
-                    
-                    console.log(`API URL 테스트: ${url}`);
-                    
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 3000);
-                    
-                    const response = await fetch(`${url}/health`, {
-                        method: 'GET',
-                        signal: controller.signal
-                    });
-                    
-                    clearTimeout(timeoutId);
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.status === 'healthy' && data.service === 'usj') {
-                            API_BASE_URL = url;
-                            connectionStatus.innerHTML = `✅ Goorm 서버 연결 성공!<br>사용 URL: ${url}`;
-                            connectionStatus.className = 'connection-status success';
-                            
-                            urlInfo.textContent = url;
-                            updateStatus('연결됨', '#28a745');
-                            
-                            console.log('✅ 작동하는 Goorm API URL 발견:', url);
-                            return;
-                        }
+            try {
+                connectionStatus.innerHTML = `🔄 서버 연결 테스트 중...<br>URL: ${API_BASE_URL}`;
+                
+                console.log(`API 연결 테스트: ${API_BASE_URL}`);
+                
+                const response = await fetch(`${API_BASE_URL}/health`, {
+                    method: 'GET',
+                    signal: AbortSignal.timeout(5000) // 5초 타임아웃
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status === 'healthy' && data.service === 'usj') {
+                        connectionStatus.innerHTML = `✅ 서버 연결 성공!<br>포트 80 (HTTP 기본 포트)`;
+                        connectionStatus.className = 'connection-status success';
+                        
+                        urlInfo.textContent = API_BASE_URL;
+                        updateStatus('연결됨', '#28a745');
+                        
+                        await generateChatId();
+                        hideConnectionStatus();
+                        
+                        console.log('✅ USJ 서버 연결 성공');
+                        return;
                     }
-                } catch (error) {
-                    console.warn(`❌ ${url} 연결 실패:`, error.message);
                 }
+                
+                throw new Error(`서버 응답 오류: ${response.status}`);
+                
+            } catch (error) {
+                console.error('❌ 서버 연결 실패:', error);
+                
+                connectionStatus.innerHTML = `❌ 서버 연결 실패<br>
+                    오류: ${error.message}<br>
+                    서버가 포트 80에서 실행 중인지 확인해주세요.`;
+                connectionStatus.className = 'connection-status failed';
+                
+                updateStatus('연결 실패', '#dc3545');
+                urlInfo.textContent = '연결 실패';
             }
-            
-            // 모든 URL 실패
-            connectionStatus.innerHTML = `❌ Goorm 서버 연결 실패<br>포트 8001이 올바르게 설정되었는지 확인해주세요.`;
-            connectionStatus.className = 'connection-status failed';
-            
-            updateStatus('연결 실패', '#dc3545');
-            urlInfo.textContent = '연결 실패';
-        }
-
-        function showGoormSettings() {
-            document.getElementById('goormSettings').style.display = 'block';
         }
 
         function hideConnectionStatus() {
@@ -472,8 +394,6 @@
         }
 
         async function generateChatId() {
-            if (!API_BASE_URL) return;
-            
             try {
                 const response = await fetch(`${API_BASE_URL}/generate-chat-id`);
                 const data = await response.json();
@@ -499,8 +419,8 @@
         }
 
         function sendQuickQuestion(question) {
-            if (!API_BASE_URL) {
-                alert('서버 연결이 설정되지 않았습니다. Goorm IDE 포트 설정을 확인해주세요.');
+            if (!chatId) {
+                alert('서버 연결이 완료되지 않았습니다. 잠시 후 다시 시도해주세요.');
                 return;
             }
             document.getElementById('messageInput').value = question;
@@ -508,8 +428,8 @@
         }
 
         async function sendMessage() {
-            if (!API_BASE_URL) {
-                showErrorMessage('서버 연결이 설정되지 않았습니다. Goorm IDE 포트 8001 설정을 확인해주세요.');
+            if (!chatId) {
+                showErrorMessage('서버 연결이 완료되지 않았습니다. 페이지를 새로고침해주세요.');
                 return;
             }
             
@@ -648,7 +568,7 @@
 
         // 연결 상태 주기적 확인
         setInterval(async () => {
-            if (!API_BASE_URL) return;
+            if (!chatId) return;
             
             try {
                 const response = await fetch(`${API_BASE_URL}/health`);
@@ -663,7 +583,7 @@
             } catch (error) {
                 updateStatus('연결 끊김', '#dc3545');
             }
-        }, 30000);
+        }, 30000); // 30초마다 확인
     </script>
 </body>
 </html>
