@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USJ 유니버셜스튜디오 챗봇 테스트</title>
+    <title>USJ 유니버셜스튜디오 챗봇 - Goorm IDE</title>
     <style>
         * {
             margin: 0;
@@ -57,6 +57,39 @@
             right: 15px;
             font-size: 0.8rem;
             opacity: 0.8;
+        }
+        
+        .url-info {
+            position: absolute;
+            top: 10px;
+            left: 15px;
+            font-size: 0.6rem;
+            opacity: 0.7;
+            max-width: 40%;
+            word-break: break-all;
+        }
+        
+        .goorm-settings {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            color: #1565c0;
+            padding: 15px;
+            margin: 15px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .goorm-settings h4 {
+            margin-bottom: 10px;
+            color: #0d47a1;
+        }
+        
+        .goorm-settings ol {
+            margin-left: 20px;
+        }
+        
+        .goorm-settings li {
+            margin-bottom: 5px;
         }
         
         .chat-messages {
@@ -225,23 +258,30 @@
             font-weight: bold;
             margin-left: 8px;
         }
-
-        .url-info {
-            position: absolute;
-            top: 10px;
-            left: 15px;
-            font-size: 0.7rem;
-            opacity: 0.7;
-        }
-
-        .connection-test {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            color: #856404;
+        
+        .connection-status {
             padding: 10px;
             border-radius: 5px;
             margin-bottom: 10px;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
+        }
+        
+        .connection-status.testing {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        
+        .connection-status.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .connection-status.failed {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
         }
     </style>
 </head>
@@ -250,18 +290,30 @@
         <div class="chat-header">
             <div class="url-info" id="urlInfo">연결 확인중...</div>
             <div class="status-info" id="statusInfo">연결 대기중</div>
-            <h1>🎢 USJ 유니버셜스튜디오 챗봇 <span class="usj-badge">전용</span></h1>
+            <h1>🎢 USJ 챗봇 <span class="usj-badge">Goorm IDE</span></h1>
             <div class="subtitle">유니버셜스튜디오 재팬 관련 정보를 문의해보세요!</div>
         </div>
         
         <div class="chat-messages" id="chatMessages">
-            <div class="connection-test" id="connectionTest">
-                🔄 서버 연결을 확인하고 있습니다...
+            <div class="connection-status testing" id="connectionStatus">
+                🔄 Goorm IDE 서버 연결을 확인하고 있습니다...
+            </div>
+            
+            <div class="goorm-settings" id="goormSettings" style="display: none;">
+                <h4>🛠️ Goorm IDE 포트 설정이 필요합니다</h4>
+                <ol>
+                    <li>Goorm IDE 대시보드 → 컨테이너 설정 → URL과 포트</li>
+                    <li>포트 8001 추가 및 공개 설정</li>
+                    <li>HTTPS 체크 해제 (HTTP 사용)</li>
+                    <li>서버 재시작 후 새로고침</li>
+                </ol>
+                <p><strong>또는</strong> 상단 "미리보기" → "포트 변경" → 8001 입력</p>
             </div>
             
             <div class="message bot">
                 <div class="message-content">
                     안녕하세요! 🎢 USJ 유니버셜스튜디오 재팬 전문 상담 챗봇입니다.<br><br>
+                    <strong>Goorm IDE 환경에서 실행 중입니다.</strong><br><br>
                     다음과 같은 정보를 도움드릴 수 있어요:
                     <ul style="margin-top: 10px; padding-left: 20px;">
                         <li>🎫 USJ 티켓 예약 및 가격</li>
@@ -306,14 +358,31 @@
     </div>
 
     <script>
-        // 🔧 여러 API URL 옵션을 시도
-        const API_URLS = [
-            'http://localhost:8001',
-            'https://usj-chatbot.run.goorm.site:8001',
-            `${window.location.protocol}//${window.location.hostname}:8001`,
-            `https://${window.location.hostname}:8001`,
-            'http://127.0.0.1:8001'
-        ];
+        // 🔧 Goorm IDE용 API URL 자동 감지 및 설정
+        function generateGoormApiUrls() {
+            const currentHost = window.location.hostname;
+            const currentProtocol = window.location.protocol;
+            
+            return [
+                // 현재 호스트 기반 (가장 가능성 높음)
+                `${currentProtocol}//${currentHost}:8001`,
+                `https://${currentHost}:8001`,
+                `http://${currentHost}:8001`,
+                
+                // 일반적인 Goorm IDE 패턴
+                `https://${currentHost.replace(':3000', '')}:8001`,
+                `http://${currentHost.replace(':3000', '')}:8001`,
+                
+                // 로컬 개발용
+                'http://localhost:8001',
+                'http://127.0.0.1:8001',
+                
+                // 포트 없는 버전 (프록시 사용 시)
+                `${currentProtocol}//${currentHost}/api`,
+                `https://${currentHost}/api`,
+                `http://${currentHost}/api`,
+            ];
+        }
         
         let API_BASE_URL = null;
         let chatId = null;
@@ -321,11 +390,14 @@
 
         // 초기화
         document.addEventListener('DOMContentLoaded', async function() {
-            await findWorkingApiUrl();
+            updateBotTime();
+            await findGoormApiUrl();
+            
             if (API_BASE_URL) {
                 await generateChatId();
-                updateBotTime();
-                hideConnectionTest();
+                hideConnectionStatus();
+            } else {
+                showGoormSettings();
             }
             
             // Enter 키 이벤트
@@ -336,35 +408,42 @@
             });
         });
 
-        async function findWorkingApiUrl() {
-            const connectionTest = document.getElementById('connectionTest');
+        async function findGoormApiUrl() {
+            const urls = generateGoormApiUrls();
+            const connectionStatus = document.getElementById('connectionStatus');
             const urlInfo = document.getElementById('urlInfo');
             
-            for (let i = 0; i < API_URLS.length; i++) {
-                const url = API_URLS[i];
+            console.log('🔍 Goorm API URL 탐지 시작...');
+            console.log('시도할 URL 목록:', urls);
+            
+            for (let i = 0; i < urls.length; i++) {
+                const url = urls[i];
                 try {
-                    connectionTest.innerHTML = `🔄 서버 연결 테스트 중... (${i + 1}/${API_URLS.length})<br>시도: ${url}`;
+                    connectionStatus.innerHTML = `🔄 Goorm 서버 연결 테스트 중...<br>(${i + 1}/${urls.length}) ${url}`;
                     
                     console.log(`API URL 테스트: ${url}`);
                     
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 3000);
+                    
                     const response = await fetch(`${url}/health`, {
                         method: 'GET',
-                        signal: AbortSignal.timeout(5000) // 5초 타임아웃
+                        signal: controller.signal
                     });
+                    
+                    clearTimeout(timeoutId);
                     
                     if (response.ok) {
                         const data = await response.json();
-                        if (data.status === 'healthy') {
+                        if (data.status === 'healthy' && data.service === 'usj') {
                             API_BASE_URL = url;
-                            connectionTest.innerHTML = `✅ 서버 연결 성공!<br>사용 URL: ${url}`;
-                            connectionTest.style.background = '#d4edda';
-                            connectionTest.style.borderColor = '#c3e6cb';
-                            connectionTest.style.color = '#155724';
+                            connectionStatus.innerHTML = `✅ Goorm 서버 연결 성공!<br>사용 URL: ${url}`;
+                            connectionStatus.className = 'connection-status success';
                             
                             urlInfo.textContent = url;
                             updateStatus('연결됨', '#28a745');
                             
-                            console.log('✅ 작동하는 API URL 발견:', url);
+                            console.log('✅ 작동하는 Goorm API URL 발견:', url);
                             return;
                         }
                     }
@@ -374,20 +453,22 @@
             }
             
             // 모든 URL 실패
-            connectionTest.innerHTML = `❌ 모든 서버 연결 시도 실패<br>서버가 실행 중인지 확인해주세요.<br><br>시도한 URL들:<br>${API_URLS.map(url => `• ${url}`).join('<br>')}`;
-            connectionTest.style.background = '#f8d7da';
-            connectionTest.style.borderColor = '#f5c6cb';
-            connectionTest.style.color = '#721c24';
+            connectionStatus.innerHTML = `❌ Goorm 서버 연결 실패<br>포트 8001이 올바르게 설정되었는지 확인해주세요.`;
+            connectionStatus.className = 'connection-status failed';
             
             updateStatus('연결 실패', '#dc3545');
             urlInfo.textContent = '연결 실패';
         }
 
-        function hideConnectionTest() {
-            const connectionTest = document.getElementById('connectionTest');
+        function showGoormSettings() {
+            document.getElementById('goormSettings').style.display = 'block';
+        }
+
+        function hideConnectionStatus() {
             setTimeout(() => {
-                connectionTest.style.display = 'none';
-            }, 2000);
+                const connectionStatus = document.getElementById('connectionStatus');
+                connectionStatus.style.display = 'none';
+            }, 3000);
         }
 
         async function generateChatId() {
@@ -418,13 +499,17 @@
         }
 
         function sendQuickQuestion(question) {
+            if (!API_BASE_URL) {
+                alert('서버 연결이 설정되지 않았습니다. Goorm IDE 포트 설정을 확인해주세요.');
+                return;
+            }
             document.getElementById('messageInput').value = question;
             sendMessage();
         }
 
         async function sendMessage() {
             if (!API_BASE_URL) {
-                showErrorMessage('서버 연결이 설정되지 않았습니다. 페이지를 새로고침해주세요.');
+                showErrorMessage('서버 연결이 설정되지 않았습니다. Goorm IDE 포트 8001 설정을 확인해주세요.');
                 return;
             }
             
@@ -507,7 +592,7 @@
 
             } catch (error) {
                 console.error('메시지 전송 오류:', error);
-                showErrorMessage(`USJ 서버 연결에 실패했습니다: ${error.message}`);
+                showErrorMessage(`서버 연결 오류: ${error.message}`);
                 updateStatus('오류 발생', '#dc3545');
             } finally {
                 isProcessing = false;
@@ -578,7 +663,7 @@
             } catch (error) {
                 updateStatus('연결 끊김', '#dc3545');
             }
-        }, 30000); // 30초마다 확인
+        }, 30000);
     </script>
 </body>
 </html>
