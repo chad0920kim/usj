@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USJ 챗봇 MRK17-1</title>
+    <title>USJ 챗봇 MRK18</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -349,7 +349,7 @@
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <h1>🎢 USJ 챗봇 MRK17</h1>
+            <h1>🎢 USJ 챗봇 MRK18</h1>
             <div class="subtitle">유니버셜스튜디오 재팬 전문 상담</div>
         </div>
         
@@ -668,88 +668,87 @@
 
         // 메시지 전송
         async function sendMessage() {
-    if (isProcessing) return;
-    
-    const input = document.getElementById('messageInput');
-    const message = input.value.trim();
-    if (!message) return;
-    
-    isProcessing = true;
-    shouldAutoScroll = true;
-    input.value = '';
-    document.getElementById('sendBtn').textContent = '전송중...';
-    
-    addMessage(message, 'user');
-    updateQuickQuestions(message); // 사용자 질문 시 가망질문 업데이트
+            if (isProcessing) return;
+            
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            isProcessing = true;
+            shouldAutoScroll = true;
+            input.value = '';
+            document.getElementById('sendBtn').textContent = '전송중...';
+            
+            addMessage(message, 'user');
+            updateQuickQuestions(message); // 사용자 질문 시 가망질문 업데이트
+            
+            if (isMobile()) {
+                input.blur();
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message, chat_id: chatId })
+                });
 
-    if (isMobile()) {
-        input.blur();
-    }
+                if (!response.ok) throw new Error('서버 오류');
 
-    try {
-        const response = await fetch(`${API_URL}/chat`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message, chat_id: chatId })
-        });
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let botMessage = addMessage('', 'bot');
+                let fullResponse = '';
 
-        if (!response.ok) throw new Error('서버 오류');
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
 
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let botMessage = addMessage('', 'bot');
-        let fullResponse = '';
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
 
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n');
-
-            for (const line of lines) {
-                if (line.startsWith('data: ') && !line.includes('[DONE]')) {
-                    try {
-                        const data = JSON.parse(line.slice(6));
-                        const content = data.choices?.[0]?.delta?.content || '';
-                        if (content) {
-                            fullResponse += content;
-                            
-                            let displayText = fullResponse;
-                            if (displayText.includes('※ 이 답변은 AI가 안내한 내용으로')) {
-                                displayText = displayText.replace(
-                                    '※ 이 답변은 AI가 안내한 내용으로', 
-                                    '\n\n※ 이 답변은 AI가 안내한 내용으로'
-                                );
-                            }
-                            
-                            botMessage.querySelector('.message-content').innerHTML = displayText.replace(/\n/g, '<br>');
-                            
-                            if (shouldAutoScroll) {
-                                scrollToBottom();
-                            }
+                    for (const line of lines) {
+                        if (line.startsWith('data: ') && !line.includes('[DONE]')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                const content = data.choices?.[0]?.delta?.content || '';
+                                if (content) {
+                                    fullResponse += content;
+                                    
+                                    let displayText = fullResponse;
+                                    if (displayText.includes('※ 이 답변은 AI가 안내한 내용으로')) {
+                                        displayText = displayText.replace(
+                                            '※ 이 답변은 AI가 안내한 내용으로', 
+                                            '\n\n※ 이 답변은 AI가 안내한 내용으로'
+                                        );
+                                    }
+                                    
+                                    botMessage.querySelector('.message-content').innerHTML = displayText.replace(/\n/g, '<br>');
+                                    
+                                    if (shouldAutoScroll) {
+                                        scrollToBottom();
+                                    }
+                                }
+                            } catch (e) {}
                         }
-                    } catch (e) {}
+                    }
+                }
+
+                setTimeout(() => {
+                    updateQuickQuestions(fullResponse || message);
+                }, 500);
+
+            } catch (error) {
+                showError('연결 오류: ' + error.message);
+            } finally {
+                isProcessing = false;
+                document.getElementById('sendBtn').textContent = '전송';
+                
+                if (shouldAutoScroll) {
+                    setTimeout(() => scrollToBottom(), 100);
                 }
             }
         }
-
-        // 중복 가망질문 업데이트 제거
-        // setTimeout(() => {
-        //     updateQuickQuestions(fullResponse || message);
-        // }, 500);
-
-    } catch (error) {
-        showError('연결 오류: ' + error.message);
-    } finally {
-        isProcessing = false;
-        document.getElementById('sendBtn').textContent = '전송';
-        
-        if (shouldAutoScroll) {
-            setTimeout(() => scrollToBottom(), 100);
-        }
-    }
-}
 
         // 메시지 추가
         function addMessage(content, type) {
