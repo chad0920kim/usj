@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USJ 챗봇 MRK7</title>
+    <title>USJ 챗봇 MRK8</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -14,6 +14,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            margin: 0;
+            padding: 0;
         }
         
         /* PC 버전 기본 스타일 */
@@ -148,21 +150,23 @@
         }
         
         /* 모바일 전용 스타일 */
-        @media (max-width: 768px) {
+        @media screen and (max-width: 768px) {
             body {
                 padding: 0;
                 align-items: stretch;
                 overflow: hidden;
+                margin: 0;
             }
             
             .chat-container {
-                width: 100%;
+                width: 100vw;
                 height: 100vh;
-                height: 100dvh; /* 동적 뷰포트 높이 */
                 border-radius: 0;
                 max-width: none;
                 box-shadow: none;
-                position: relative;
+                position: fixed;
+                top: 0;
+                left: 0;
             }
             
             .chat-header {
@@ -245,7 +249,7 @@
         }
         
         /* 아주 작은 모바일 (iPhone SE 등) */
-        @media (max-width: 375px) {
+        @media screen and (max-width: 375px) {
             .chat-header {
                 padding: 12px 15px;
             }
@@ -275,7 +279,7 @@
         }
         
         /* 태블릿 */
-        @media (min-width: 769px) and (max-width: 1024px) {
+        @media screen and (min-width: 769px) and (max-width: 1024px) {
             .chat-container {
                 width: 85%;
                 max-width: 700px;
@@ -309,7 +313,7 @@
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <h1>🎢 USJ 챗봇 MRK7</h1>
+            <h1>🎢 USJ 챗봇 MRK8</h1>
             <div class="subtitle">유니버셜스튜디오 재팬 전문 상담</div>
         </div>
         
