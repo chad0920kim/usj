@@ -225,7 +225,17 @@
                                 const content = data.choices?.[0]?.delta?.content || '';
                                 if (content) {
                                     fullResponse += content;
-                                    botMessage.querySelector('.message-content').textContent = fullResponse;
+                                    
+                                    // ※ 문구 앞에 빈 줄 추가 처리
+                                    let displayText = fullResponse;
+                                    if (displayText.includes('※ 이 답변은 AI가 안내한 내용으로')) {
+                                        displayText = displayText.replace(
+                                            '※ 이 답변은 AI가 안내한 내용으로', 
+                                            '\n※ 이 답변은 AI가 안내한 내용으로'
+                                        );
+                                    }
+                                    
+                                    botMessage.querySelector('.message-content').innerHTML = displayText.replace(/\n/g, '<br>');
                                 }
                             } catch (e) {}
                         }
