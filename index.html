@@ -226,22 +226,6 @@
             margin-left: 8px;
         }
 
-        /* 피드백 버튼 스타일 개선 */
-        .feedback-buttons button {
-            margin: 0 5px;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .feedback-buttons button:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-        }
-
         .url-info {
             position: absolute;
             top: 10px;
@@ -249,18 +233,32 @@
             font-size: 0.7rem;
             opacity: 0.7;
         }
+
+        .connection-test {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-size: 0.8rem;
+        }
     </style>
 </head>
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <div class="url-info" id="urlInfo">Goorm IDE</div>
+            <div class="url-info" id="urlInfo">연결 확인중...</div>
             <div class="status-info" id="statusInfo">연결 대기중</div>
             <h1>🎢 USJ 유니버셜스튜디오 챗봇 <span class="usj-badge">전용</span></h1>
             <div class="subtitle">유니버셜스튜디오 재팬 관련 정보를 문의해보세요!</div>
         </div>
         
         <div class="chat-messages" id="chatMessages">
+            <div class="connection-test" id="connectionTest">
+                🔄 서버 연결을 확인하고 있습니다...
+            </div>
+            
             <div class="message bot">
                 <div class="message-content">
                     안녕하세요! 🎢 USJ 유니버셜스튜디오 재팬 전문 상담 챗봇입니다.<br><br>
@@ -308,20 +306,27 @@
     </div>
 
     <script>
-        // 🔧 Goorm IDE용 API URL 설정
-        const API_BASE_URL = 'https://usj-chatbot.run.goorm.site:8001';
+        // 🔧 여러 API URL 옵션을 시도
+        const API_URLS = [
+            'http://localhost:8001',
+            'https://usj-chatbot.run.goorm.site:8001',
+            `${window.location.protocol}//${window.location.hostname}:8001`,
+            `https://${window.location.hostname}:8001`,
+            'http://127.0.0.1:8001'
+        ];
         
+        let API_BASE_URL = null;
         let chatId = null;
         let isProcessing = false;
 
         // 초기화
         document.addEventListener('DOMContentLoaded', async function() {
-            await generateChatId();
-            updateStatus('연결됨', '#28a745');
-            updateBotTime();
-            
-            // URL 정보 표시
-            document.getElementById('urlInfo').textContent = API_BASE_URL;
+            await findWorkingApiUrl();
+            if (API_BASE_URL) {
+                await generateChatId();
+                updateBotTime();
+                hideConnectionTest();
+            }
             
             // Enter 키 이벤트
             document.getElementById('messageInput').addEventListener('keypress', function(e) {
@@ -331,7 +336,63 @@
             });
         });
 
+        async function findWorkingApiUrl() {
+            const connectionTest = document.getElementById('connectionTest');
+            const urlInfo = document.getElementById('urlInfo');
+            
+            for (let i = 0; i < API_URLS.length; i++) {
+                const url = API_URLS[i];
+                try {
+                    connectionTest.innerHTML = `🔄 서버 연결 테스트 중... (${i + 1}/${API_URLS.length})<br>시도: ${url}`;
+                    
+                    console.log(`API URL 테스트: ${url}`);
+                    
+                    const response = await fetch(`${url}/health`, {
+                        method: 'GET',
+                        signal: AbortSignal.timeout(5000) // 5초 타임아웃
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.status === 'healthy') {
+                            API_BASE_URL = url;
+                            connectionTest.innerHTML = `✅ 서버 연결 성공!<br>사용 URL: ${url}`;
+                            connectionTest.style.background = '#d4edda';
+                            connectionTest.style.borderColor = '#c3e6cb';
+                            connectionTest.style.color = '#155724';
+                            
+                            urlInfo.textContent = url;
+                            updateStatus('연결됨', '#28a745');
+                            
+                            console.log('✅ 작동하는 API URL 발견:', url);
+                            return;
+                        }
+                    }
+                } catch (error) {
+                    console.warn(`❌ ${url} 연결 실패:`, error.message);
+                }
+            }
+            
+            // 모든 URL 실패
+            connectionTest.innerHTML = `❌ 모든 서버 연결 시도 실패<br>서버가 실행 중인지 확인해주세요.<br><br>시도한 URL들:<br>${API_URLS.map(url => `• ${url}`).join('<br>')}`;
+            connectionTest.style.background = '#f8d7da';
+            connectionTest.style.borderColor = '#f5c6cb';
+            connectionTest.style.color = '#721c24';
+            
+            updateStatus('연결 실패', '#dc3545');
+            urlInfo.textContent = '연결 실패';
+        }
+
+        function hideConnectionTest() {
+            const connectionTest = document.getElementById('connectionTest');
+            setTimeout(() => {
+                connectionTest.style.display = 'none';
+            }, 2000);
+        }
+
         async function generateChatId() {
+            if (!API_BASE_URL) return;
+            
             try {
                 const response = await fetch(`${API_BASE_URL}/generate-chat-id`);
                 const data = await response.json();
@@ -340,7 +401,7 @@
                 updateStatus(`연결됨 (${chatId})`, '#28a745');
             } catch (error) {
                 console.error('Chat ID 생성 실패:', error);
-                updateStatus('연결 실패', '#dc3545');
+                updateStatus('Chat ID 생성 실패', '#dc3545');
             }
         }
 
@@ -362,6 +423,11 @@
         }
 
         async function sendMessage() {
+            if (!API_BASE_URL) {
+                showErrorMessage('서버 연결이 설정되지 않았습니다. 페이지를 새로고침해주세요.');
+                return;
+            }
+            
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
             
@@ -378,6 +444,8 @@
             showTypingIndicator(true);
             
             try {
+                console.log(`메시지 전송: ${API_BASE_URL}/chat`);
+                
                 const response = await fetch(`${API_BASE_URL}/chat`, {
                     method: 'POST',
                     headers: {
@@ -425,15 +493,7 @@
                                     }
                                     
                                     fullResponse += content;
-                                    
-                                    // HTML 타입 확인 (피드백 버튼)
-                                    if (parsed.choices?.[0]?.delta?.type === 'html') {
-                                        botMessageElement.querySelector('.message-content').innerHTML = fullResponse;
-                                    } else {
-                                        botMessageElement.querySelector('.message-content').textContent = fullResponse;
-                                    }
-                                    
-                                    // 스크롤을 아래로
+                                    botMessageElement.querySelector('.message-content').textContent = fullResponse;
                                     scrollToBottom();
                                 }
                             } catch (parseError) {
@@ -447,7 +507,7 @@
 
             } catch (error) {
                 console.error('메시지 전송 오류:', error);
-                showErrorMessage('USJ 서버 연결에 실패했습니다. 서버가 실행 중인지 확인해주세요.');
+                showErrorMessage(`USJ 서버 연결에 실패했습니다: ${error.message}`);
                 updateStatus('오류 발생', '#dc3545');
             } finally {
                 isProcessing = false;
@@ -501,24 +561,10 @@
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
-        // 피드백 전송 함수 (전역)
-        window.sendFeedback = async function(type, feedbackChatId) {
-            try {
-                const response = await fetch(`${API_BASE_URL}/feedback-simple?chat_id=${feedbackChatId}&type=${type}`);
-                const result = await response.json();
-                
-                if (result.status === 'success') {
-                    console.log('USJ 피드백 전송 완료:', result);
-                } else {
-                    console.error('USJ 피드백 전송 실패:', result);
-                }
-            } catch (error) {
-                console.error('USJ 피드백 전송 오류:', error);
-            }
-        };
-
         // 연결 상태 주기적 확인
         setInterval(async () => {
+            if (!API_BASE_URL) return;
+            
             try {
                 const response = await fetch(`${API_BASE_URL}/health`);
                 if (response.ok) {
