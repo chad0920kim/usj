@@ -347,9 +347,38 @@
         const API_URL = 'https://usj-chatbot.run.goorm.site';
         let chatId = 'user_' + Date.now();
         let isProcessing = false;
+        let shouldAutoScroll = true; // 자동 스크롤 제어 변수
+        
+        // 자동 스크롤 함수
+        function scrollToBottom() {
+            const messages = document.getElementById('chatMessages');
+            messages.scrollTop = messages.scrollHeight;
+        }
+        
+        // 부드러운 자동 스크롤 함수
+        function smoothScrollToBottom() {
+            const messages = document.getElementById('chatMessages');
+            messages.scrollTo({
+                top: messages.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+        
+        // 사용자가 수동으로 스크롤했는지 감지
+        function setupScrollListener() {
+            const messages = document.getElementById('chatMessages');
+            let isUserScrolling = false;
+            
+            messages.addEventListener('scroll', () => {
+                const isAtBottom = messages.scrollHeight - messages.scrollTop <= messages.clientHeight + 50;
+                shouldAutoScroll = isAtBottom;
+            });
+        }
         
         // 디바이스별 초기화
         document.addEventListener('DOMContentLoaded', function() {
+            setupScrollListener(); // 스크롤 리스너 설정
+            
             if (isMobile()) {
                 console.log('📱 모바일 디바이스 감지');
                 
@@ -371,7 +400,7 @@
                 
                 // 초기 스크롤 위치 설정
                 setTimeout(() => {
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    scrollToBottom();
                 }, 100);
                 
             } else {
@@ -401,6 +430,7 @@
             if (!message) return;
             
             isProcessing = true;
+            shouldAutoScroll = true; // 새 메시지 전송 시 자동 스크롤 활성화
             input.value = '';
             document.getElementById('sendBtn').textContent = '전송중...';
             
@@ -452,6 +482,11 @@
                                     }
                                     
                                     botMessage.querySelector('.message-content').innerHTML = displayText.replace(/\n/g, '<br>');
+                                    
+                                    // 실시간 자동 스크롤 (사용자가 위로 스크롤하지 않은 경우에만)
+                                    if (shouldAutoScroll) {
+                                        scrollToBottom();
+                                    }
                                 }
                             } catch (e) {}
                         }
@@ -463,17 +498,27 @@
             } finally {
                 isProcessing = false;
                 document.getElementById('sendBtn').textContent = '전송';
+                
+                // 최종 스크롤
+                if (shouldAutoScroll) {
+                    setTimeout(() => scrollToBottom(), 100);
+                }
             }
         }
 
-        // 메시지 추가
+        // 메시지 추가 (개선된 버전)
         function addMessage(content, type) {
             const messages = document.getElementById('chatMessages');
             const div = document.createElement('div');
             div.className = `message ${type}`;
             div.innerHTML = `<div class="message-content">${content}</div>`;
             messages.appendChild(div);
-            messages.scrollTop = messages.scrollHeight;
+            
+            // 자동 스크롤 (사용자가 위로 스크롤하지 않은 경우에만)
+            if (shouldAutoScroll) {
+                scrollToBottom();
+            }
+            
             return div;
         }
 
@@ -484,24 +529,44 @@
             div.className = 'error-message';
             div.textContent = message;
             messages.appendChild(div);
-            messages.scrollTop = messages.scrollHeight;
+            
+            if (shouldAutoScroll) {
+                scrollToBottom();
+            }
         }
         
         // 화면 크기 변경 감지
         window.addEventListener('resize', function() {
-            // 스크롤 위치 유지
-            const messages = document.getElementById('chatMessages');
-            messages.scrollTop = messages.scrollHeight;
+            // 스크롤 위치 유지하되, 자동 스크롤 상태면 하단으로
+            if (shouldAutoScroll) {
+                setTimeout(() => scrollToBottom(), 100);
+            }
         });
         
         // 모바일 키보드 대응
         if (isMobile()) {
+            let initialViewportHeight = window.innerHeight;
+            
             window.addEventListener('resize', function() {
-                // 키보드가 올라오면 스크롤 조정
-                setTimeout(() => {
-                    const messages = document.getElementById('chatMessages');
-                    messages.scrollTop = messages.scrollHeight;
-                }, 300);
+                const currentHeight = window.innerHeight;
+                const heightDifference = initialViewportHeight - currentHeight;
+                
+                // 키보드가 올라온 경우 (높이가 150px 이상 줄어든 경우)
+                if (heightDifference > 150) {
+                    setTimeout(() => {
+                        if (shouldAutoScroll) {
+                            scrollToBottom();
+                        }
+                    }, 300);
+                }
+                // 키보드가 내려간 경우
+                else if (heightDifference < 50) {
+                    setTimeout(() => {
+                        if (shouldAutoScroll) {
+                            scrollToBottom();
+                        }
+                    }, 100);
+                }
             });
         }
     </script>
