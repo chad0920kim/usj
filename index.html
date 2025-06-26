@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USJ 챗봇 MRK10</title>
+    <title>USJ 챗봇 MRK11</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -313,7 +313,7 @@
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <h1>🎢 USJ 챗봇 MRK10</h1>
+            <h1>🎢 USJ 챗봇 MRK11</h1>
             <div class="subtitle">유니버셜스튜디오 재팬 전문 상담</div>
         </div>
         
@@ -481,15 +481,37 @@
             return shuffled.slice(0, count);
         }
         
-        // 빠른 질문 업데이트 함수
+        // 빠른 질문 업데이트 함수 (연관질문 1개 + 랜덤질문 1개)
         function updateQuickQuestions(relatedToMessage = null) {
             const quickQuestionsContainer = document.querySelector('.quick-questions');
             if (!quickQuestionsContainer) return;
             
-            let newQuestions;
+            let newQuestions = [];
+            
             if (relatedToMessage) {
-                newQuestions = getRelatedQuestions(relatedToMessage, 2);
+                // 1개는 연관 질문
+                const relatedQuestions = getRelatedQuestions(relatedToMessage, 1);
+                if (relatedQuestions.length > 0) {
+                    newQuestions.push(relatedQuestions[0]);
+                }
+                
+                // 1개는 완전히 다른 랜덤 질문 (연관성 없는)
+                const randomQuestions = getRandomQuestions(3, [...currentQuestions, relatedToMessage, ...relatedQuestions]);
+                if (randomQuestions.length > 0) {
+                    newQuestions.push(randomQuestions[0]);
+                }
+                
+                // 혹시 부족하면 랜덤으로 채우기
+                while (newQuestions.length < 2 && newQuestions.length < usjQuestions.length) {
+                    const additionalRandom = getRandomQuestions(1, [...currentQuestions, ...newQuestions]);
+                    if (additionalRandom.length > 0) {
+                        newQuestions.push(additionalRandom[0]);
+                    } else {
+                        break;
+                    }
+                }
             } else {
+                // 초기 로딩 시에는 완전 랜덤 2개
                 newQuestions = getRandomQuestions(2, currentQuestions);
             }
             
