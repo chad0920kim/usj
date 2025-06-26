@@ -668,87 +668,88 @@
 
         // 메시지 전송
         async function sendMessage() {
-            if (isProcessing) return;
-            
-            const input = document.getElementById('messageInput');
-            const message = input.value.trim();
-            if (!message) return;
-            
-            isProcessing = true;
-            shouldAutoScroll = true;
-            input.value = '';
-            document.getElementById('sendBtn').textContent = '전송중...';
-            
-            addMessage(message, 'user');
-            updateQuickQuestions(message); // 사용자 질문 시 가망질문 업데이트
-            
-            if (isMobile()) {
-                input.blur();
-            }
-            
-            try {
-                const response = await fetch(`${API_URL}/chat`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message, chat_id: chatId })
-                });
+    if (isProcessing) return;
+    
+    const input = document.getElementById('messageInput');
+    const message = input.value.trim();
+    if (!message) return;
+    
+    isProcessing = true;
+    shouldAutoScroll = true;
+    input.value = '';
+    document.getElementById('sendBtn').textContent = '전송중...';
+    
+    addMessage(message, 'user');
+    updateQuickQuestions(message); // 사용자 질문 시 가망질문 업데이트
 
-                if (!response.ok) throw new Error('서버 오류');
+    if (isMobile()) {
+        input.blur();
+    }
 
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
-                let botMessage = addMessage('', 'bot');
-                let fullResponse = '';
+    try {
+        const response = await fetch(`${API_URL}/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message, chat_id: chatId })
+        });
 
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
+        if (!response.ok) throw new Error('서버 오류');
 
-                    const chunk = decoder.decode(value);
-                    const lines = chunk.split('\n');
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let botMessage = addMessage('', 'bot');
+        let fullResponse = '';
 
-                    for (const line of lines) {
-                        if (line.startsWith('data: ') && !line.includes('[DONE]')) {
-                            try {
-                                const data = JSON.parse(line.slice(6));
-                                const content = data.choices?.[0]?.delta?.content || '';
-                                if (content) {
-                                    fullResponse += content;
-                                    
-                                    let displayText = fullResponse;
-                                    if (displayText.includes('※ 이 답변은 AI가 안내한 내용으로')) {
-                                        displayText = displayText.replace(
-                                            '※ 이 답변은 AI가 안내한 내용으로', 
-                                            '\n\n※ 이 답변은 AI가 안내한 내용으로'
-                                        );
-                                    }
-                                    
-                                    botMessage.querySelector('.message-content').innerHTML = displayText.replace(/\n/g, '<br>');
-                                    
-                                    if (shouldAutoScroll) {
-                                        scrollToBottom();
-                                    }
-                                }
-                            } catch (e) {}
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n');
+
+            for (const line of lines) {
+                if (line.startsWith('data: ') && !line.includes('[DONE]')) {
+                    try {
+                        const data = JSON.parse(line.slice(6));
+                        const content = data.choices?.[0]?.delta?.content || '';
+                        if (content) {
+                            fullResponse += content;
+                            
+                            let displayText = fullResponse;
+                            if (displayText.includes('※ 이 답변은 AI가 안내한 내용으로')) {
+                                displayText = displayText.replace(
+                                    '※ 이 답변은 AI가 안내한 내용으로', 
+                                    '\n\n※ 이 답변은 AI가 안내한 내용으로'
+                                );
+                            }
+                            
+                            botMessage.querySelector('.message-content').innerHTML = displayText.replace(/\n/g, '<br>');
+                            
+                            if (shouldAutoScroll) {
+                                scrollToBottom();
+                            }
                         }
-                    }
-                }
-
-                setTimeout(() => {
-                    updateQuickQuestions(fullResponse || message);
-                }, 500);
-
-            } catch (error) {
-                showError('연결 오류: ' + error.message);
-            } finally {
-                isProcessing = false;
-                document.getElementById('sendBtn').textContent = '전송';
-                
-                if (shouldAutoScroll) {
-                    setTimeout(() => scrollToBottom(), 100);
+                    } catch (e) {}
                 }
             }
         }
+
+        // 중복 가망질문 업데이트 제거
+        // setTimeout(() => {
+        //     updateQuickQuestions(fullResponse || message);
+        // }, 500);
+
+    } catch (error) {
+        showError('연결 오류: ' + error.message);
+    } finally {
+        isProcessing = false;
+        document.getElementById('sendBtn').textContent = '전송';
+        
+        if (shouldAutoScroll) {
+            setTimeout(() => scrollToBottom(), 100);
+        }
+    }
+}
 
         // 메시지 추가
         function addMessage(content, type) {
