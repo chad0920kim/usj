@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>USJ 챗봇 MRK20-5</title>
+  <title>USJ 챗봇 MRK20-6</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -121,7 +121,7 @@
 <body>
   <div class="chat-container">
     <div class="chat-header">
-      <h1>🎢 USJ 챗봇 MRK20-5</h1>
+      <h1>🎢 USJ 챗봇 MRK20-6</h1>
       <div class="subtitle">유니버셜스튜디오 재팬 전문 상담</div>
     </div>
     <div class="chat-messages" id="chatMessages">
@@ -148,191 +148,217 @@
   </div>
 
   <script>
-    const API_URL = 'https://usj-chatbot.run.goorm.site';
-    let chatId = 'user_' + Date.now();
-    let isProcessing = false;
-    let shouldAutoScroll = true;
+  const API_URL = 'https://usj-chatbot.run.goorm.site';
+  let chatId = 'user_' + Date.now();
+  let isProcessing = false;
+  let shouldAutoScroll = true;
 
-    let usjQAData = [];
-    let usjQuestions = [];
-    let currentQuestions = [];
-    let questionHistory = [];
-    let historyIndex = -1;
+  let usjQAData = [];
+  let usjQuestions = [];
+  let currentQuestions = [];
+  let questionHistory = [];
+  let historyIndex = -1;
 
-    async function loadQAData() {
-      try {
-        const response = await fetch('./usj_qa.json');
-        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        usjQAData = await response.json();
-        usjQuestions = usjQAData.map(item => item.Q);
-
-        console.log('✅ JSON 로드 완료:', usjQuestions.length);
-
-        updateQuickQuestions();
-        updateControlButtons();
-      } catch (error) {
-        console.error('Q&A 데이터 로드 실패:', error);
-        showError('질문 데이터를 불러오지 못했습니다.');
+  async function loadQAData() {
+    try {
+      // ✅ 안전한 URL 구성
+      let jsonPath = window.location.origin + window.location.pathname;
+      if (!jsonPath.endsWith('/')) {
+        jsonPath = jsonPath.substring(0, jsonPath.lastIndexOf('/') + 1);
       }
+      const jsonURL = jsonPath + 'usj_qa.json';
+
+      console.log('✅ JSON 요청 URL:', jsonURL);
+
+      // ✅ fetch 호출
+      const response = await fetch(jsonURL);
+      console.log('✅ Fetch 상태:', response.status, response.statusText);
+      console.log('✅ Content-Type:', response.headers.get('Content-Type'));
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+
+      const text = await response.text();
+      console.log('✅ Raw JSON:', text.substring(0, 100) + '...');
+
+      usjQAData = JSON.parse(text);
+      usjQuestions = usjQAData.map(item => item.Q);
+
+      console.log(`✅ JSON 파싱 완료: ${usjQuestions.length}개 질문`);
+
+      if (usjQuestions.length === 0) {
+        throw new Error('⚠️ JSON은 정상인데 질문 배열이 비어있습니다.');
+      }
+
+      updateQuickQuestions();
+      updateControlButtons();
+    } catch (error) {
+      console.error('❌ Q&A 데이터 로드 실패:', error);
+      showError('질문 데이터를 불러오지 못했습니다. 경로 또는 CORS 문제를 확인하세요.');
     }
+  }
 
-    function getRandomQuestions(count = 2) {
-      const shuffled = [...usjQuestions];
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-      }
-      return shuffled.slice(0, count);
+  function getRandomQuestions(count = 2) {
+    const shuffled = [...usjQuestions];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
+    return shuffled.slice(0, count);
+  }
 
-    function updateQuickQuestions() {
-      const newQuestions = getRandomQuestions(2);
-      if (currentQuestions.length > 0) {
-        questionHistory = questionHistory.slice(0, historyIndex + 1);
-        questionHistory.push([...currentQuestions]);
-        if (questionHistory.length > 20) {
-          questionHistory = questionHistory.slice(-20);
-        }
-        historyIndex = questionHistory.length - 1;
+  function updateQuickQuestions() {
+    const newQuestions = getRandomQuestions(2);
+    if (currentQuestions.length > 0) {
+      questionHistory = questionHistory.slice(0, historyIndex + 1);
+      questionHistory.push([...currentQuestions]);
+      if (questionHistory.length > 20) {
+        questionHistory = questionHistory.slice(-20);
       }
-      currentQuestions = newQuestions;
+      historyIndex = questionHistory.length - 1;
+    }
+    currentQuestions = newQuestions;
+    renderQuestions();
+    updateControlButtons();
+  }
+
+  function renderQuestions() {
+    const container = document.querySelector('.quick-questions');
+    container.innerHTML = '';
+    currentQuestions.forEach(q => {
+      const btn = document.createElement('button');
+      btn.className = 'quick-btn';
+      btn.textContent = q;
+      btn.onclick = () => sendQuick(q);
+      container.appendChild(btn);
+    });
+  }
+
+  function showPreviousQuestions() {
+    if (historyIndex > 0) {
+      historyIndex--;
+      currentQuestions = [...questionHistory[historyIndex]];
       renderQuestions();
       updateControlButtons();
     }
+  }
 
-    function renderQuestions() {
-      const container = document.querySelector('.quick-questions');
-      container.innerHTML = '';
-      currentQuestions.forEach(q => {
-        const btn = document.createElement('button');
-        btn.className = 'quick-btn';
-        btn.textContent = q;
-        btn.onclick = () => sendQuick(q);
-        container.appendChild(btn);
-      });
-    }
+  function showNextQuestions() {
+    updateQuickQuestions();
+  }
 
-    function showPreviousQuestions() {
-      if (historyIndex > 0) {
-        historyIndex--;
-        currentQuestions = [...questionHistory[historyIndex]];
-        renderQuestions();
-        updateControlButtons();
-      }
-    }
+  function updateControlButtons() {
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    prevBtn.disabled = historyIndex <= 0;
+    nextBtn.disabled = false;
+  }
 
-    function showNextQuestions() {
-      updateQuickQuestions();
-    }
+  function findAnswerFromQA(question) {
+    const item = usjQAData.find(item => item.Q === question);
+    return item ? item.A : null;
+  }
 
-    function updateControlButtons() {
-      const prevBtn = document.getElementById('prevBtn');
-      const nextBtn = document.getElementById('nextBtn');
-      prevBtn.disabled = historyIndex <= 0;
-      nextBtn.disabled = false;
-    }
+  function sendQuick(question) {
+    document.getElementById('messageInput').value = question;
+    sendMessage();
+  }
 
-    function findAnswerFromQA(question) {
-      const item = usjQAData.find(item => item.Q === question);
-      return item ? item.A : null;
-    }
+  async function sendMessage() {
+    if (isProcessing) return;
 
-    function sendQuick(question) {
-      document.getElementById('messageInput').value = question;
-      sendMessage();
-    }
+    const input = document.getElementById('messageInput');
+    const message = input.value.trim();
+    if (!message) return;
 
-    async function sendMessage() {
-      if (isProcessing) return;
+    isProcessing = true;
+    shouldAutoScroll = true;
+    input.value = '';
+    document.getElementById('sendBtn').textContent = '전송중...';
 
-      const input = document.getElementById('messageInput');
-      const message = input.value.trim();
-      if (!message) return;
+    addMessage(message, 'user');
 
-      isProcessing = true;
-      shouldAutoScroll = true;
-      input.value = '';
-      document.getElementById('sendBtn').textContent = '전송중...';
+    try {
+      const answer = findAnswerFromQA(message);
+      if (answer) {
+        const botMessage = addMessage('', 'bot');
+        botMessage.querySelector('.message-content').innerHTML = answer.replace(/\n/g, '<br>') + '<br><br>※ 미리 준비된 답변입니다.';
+      } else {
+        const response = await fetch(`${API_URL}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message, chat_id: chatId })
+        });
 
-      addMessage(message, 'user');
+        if (!response.ok) throw new Error('서버 오류');
 
-      try {
-        const answer = findAnswerFromQA(message);
-        if (answer) {
-          const botMessage = addMessage('', 'bot');
-          botMessage.querySelector('.message-content').innerHTML = answer.replace(/\n/g, '<br>') + '<br><br>※ 미리 준비된 답변입니다.';
-        } else {
-          const response = await fetch(`${API_URL}/chat`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message, chat_id: chatId })
-          });
-          if (!response.ok) throw new Error('서버 오류');
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let botMessage = addMessage('', 'bot');
+        let fullResponse = '';
 
-          const reader = response.body.getReader();
-          const decoder = new TextDecoder();
-          let botMessage = addMessage('', 'bot');
-          let fullResponse = '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n');
-            for (const line of lines) {
-              if (line.startsWith('data: ') && !line.includes('[DONE]')) {
-                const data = JSON.parse(line.slice(6));
-                const content = data.choices?.[0]?.delta?.content || '';
-                if (content) {
-                  fullResponse += content;
-                  botMessage.querySelector('.message-content').innerHTML = fullResponse.replace(/\n/g, '<br>');
-                  if (shouldAutoScroll) scrollToBottom();
-                }
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+          for (const line of lines) {
+            if (line.startsWith('data: ') && !line.includes('[DONE]')) {
+              const data = JSON.parse(line.slice(6));
+              const content = data.choices?.[0]?.delta?.content || '';
+              if (content) {
+                fullResponse += content;
+                botMessage.querySelector('.message-content').innerHTML = fullResponse.replace(/\n/g, '<br>');
+                if (shouldAutoScroll) scrollToBottom();
               }
             }
           }
         }
-        updateQuickQuestions();
-      } catch (err) {
-        showError('연결 오류: ' + err.message);
-      } finally {
-        isProcessing = false;
-        document.getElementById('sendBtn').textContent = '전송';
       }
+      updateQuickQuestions();
+    } catch (err) {
+      showError('연결 오류: ' + err.message);
+    } finally {
+      isProcessing = false;
+      document.getElementById('sendBtn').textContent = '전송';
     }
+  }
 
-    function addMessage(content, type) {
-      const messages = document.getElementById('chatMessages');
-      const div = document.createElement('div');
-      div.className = `message ${type}`;
-      div.innerHTML = `<div class="message-content">${content}</div>`;
-      messages.appendChild(div);
-      if (shouldAutoScroll) scrollToBottom();
-      return div;
+  function addMessage(content, type) {
+    const messages = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = `message ${type}`;
+    div.innerHTML = `<div class="message-content">${content}</div>`;
+    messages.appendChild(div);
+    if (shouldAutoScroll) scrollToBottom();
+    return div;
+  }
+
+  function showError(msg) {
+    const messages = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = 'error-message';
+    div.textContent = msg;
+    messages.appendChild(div);
+    if (shouldAutoScroll) scrollToBottom();
+  }
+
+  function scrollToBottom() {
+    const messages = document.getElementById('chatMessages');
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function handleEnter(event) {
+    if (event.key === 'Enter') sendMessage();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (window.location.protocol === 'file:') {
+      alert('⚠️ 로컬 file:// 경로에서는 fetch가 작동하지 않습니다.\n꼭 Live Server 또는 GitHub Pages로 열어보세요!');
     }
+    loadQAData();
+  });
+</script>
 
-    function showError(msg) {
-      const messages = document.getElementById('chatMessages');
-      const div = document.createElement('div');
-      div.className = 'error-message';
-      div.textContent = msg;
-      messages.appendChild(div);
-      if (shouldAutoScroll) scrollToBottom();
-    }
-
-    function scrollToBottom() {
-      const messages = document.getElementById('chatMessages');
-      messages.scrollTop = messages.scrollHeight;
-    }
-
-    function handleEnter(event) {
-      if (event.key === 'Enter') sendMessage();
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      loadQAData();
-    });
-  </script>
 </body>
 </html>
