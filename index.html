@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USJ 챗봇 MRK25</title>
+    <title>USJ 챗봇 MRK26</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -349,7 +349,7 @@
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <h1>🎢 USJ 챗봇 MRK25</h1>
+            <h1>🎢 USJ 챗봇 MRK26</h1>
             <div class="subtitle">유니버셜스튜디오 재팬 전문 상담</div>
         </div>
         
@@ -393,20 +393,71 @@
         let allQuestions = [];
         let questionHistory = [];
         let currentHistoryIndex = -1;
+        let unusedQuestions = []; // 아직 사용하지 않은 질문들
+        let usedQuestions = []; // 이미 사용된 질문들
 
-        // 완전 랜덤 질문 생성 함수
+        // 완벽한 중복 방지 랜덤 질문 생성 함수
         function getRandomQuestions(count = 2) {
             if (allQuestions.length === 0) {
                 console.log('❌ 질문 데이터가 없습니다.');
                 return [];
             }
 
-            const shuffled = [...allQuestions].sort(() => Math.random() - 0.5);
+            // 사용하지 않은 질문이 부족하면 새로운 사이클 시작
+            if (unusedQuestions.length < count) {
+                console.log('🔄 모든 질문 사용 완료 - 새로운 사이클 시작');
+                startNewCycle();
+            }
+            
+            console.log(`📊 전체: ${allQuestions.length}개, 미사용: ${unusedQuestions.length}개, 사용완료: ${usedQuestions.length}개`);
+
+            // Fisher-Yates 셔플로 미사용 질문들 섞기
+            const shuffled = [...unusedQuestions];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            
+            // 크립토 API로 추가 랜덤화
+            if (window.crypto && window.crypto.getRandomValues) {
+                const randomArray = new Uint32Array(shuffled.length);
+                window.crypto.getRandomValues(randomArray);
+                shuffled.sort((a, b) => randomArray[shuffled.indexOf(a)] - randomArray[shuffled.indexOf(b)]);
+                console.log('🔐 크립토 API로 추가 랜덤화 적용');
+            }
+            
+            // 요청된 개수만큼 선택
             const selected = shuffled.slice(0, Math.min(count, shuffled.length));
             
-            console.log(`🎲 완전 랜덤 ${selected.length}개 질문 생성:`, selected);
+            // 선택된 질문들을 미사용 목록에서 제거하고 사용완료 목록에 추가
+            selected.forEach(question => {
+                const index = unusedQuestions.indexOf(question);
+                if (index > -1) {
+                    unusedQuestions.splice(index, 1);
+                    usedQuestions.push(question);
+                }
+            });
+            
+            console.log(`✅ 완벽한 중복방지 ${selected.length}개 질문 선택 완료`);
+            console.log(`📝 선택된 질문: "${selected[0]?.substring(0, 40)}...", "${selected[1]?.substring(0, 40)}..."`);
+            console.log(`📈 진행률: ${usedQuestions.length}/${allQuestions.length} (${Math.round(usedQuestions.length/allQuestions.length*100)}%)`);
             
             return selected;
+        }
+
+        // 새로운 사이클 시작 (모든 질문을 다시 사용 가능하게)
+        function startNewCycle() {
+            unusedQuestions = [...allQuestions];
+            usedQuestions = [];
+            console.log(`🆕 새로운 사이클 시작 - ${unusedQuestions.length}개 질문 준비 완료`);
+        }
+
+        // 질문 풀 초기화
+        function initializeQuestionPool() {
+            if (allQuestions.length > 0) {
+                startNewCycle();
+                console.log(`🎯 질문 풀 초기화 완료 - 총 ${allQuestions.length}개 질문`);
+            }
         }
 
         // 새로운 랜덤 질문 표시
@@ -495,60 +546,19 @@
 
         // JSON 파일 로드
         async function loadQAData() {
-            try {
-                console.log('🔄 Q&A 데이터 로드 시작...');
-                const response = await fetch('./usj_qa.json');
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                usjQAData = await response.json();
-                allQuestions = usjQAData.map(item => item.Q);
-                
-                console.log(`✅ ${allQuestions.length}개 질문 로드 완료`);
-                
-                // 첫 번째 랜덤 질문 세트 생성
-                showNewRandomQuestions();
-                
-            } catch (error) {
-                console.error('❌ Q&A 데이터 로드 실패:', error);
-                
-                // 폴백 데이터
-                usjQAData = [
-                    {
-                        "Q": "USJ 입장 시 캐리어를 맡길 수 있는 곳이 있나요?",
-                        "A": "정문 우측 외부에 대형 코인 락커가 있고, 사이즈에 따라 400~1,200엔입니다. 만석 시에는 유니버설 시티역 주변 상업시설 내 락커도 대안입니다."
-                    },
-                    {
-                        "Q": "USJ에서 당일 입장권도 구매할 수 있나요?",
-                        "A": "가능합니다. 하지만 당일 판매는 조기 매진 가능성이 크며, 특히 익스프레스 패스는 온라인 사전 구매 없이는 거의 불가능합니다."
-                    },
-                    {
-                        "Q": "USJ에서 마리오 카트 어트랙션은 얼마나 기다려야 하나요?",
-                        "A": "평균 대기 시간은 평일 60~90분, 주말 및 일본 연휴에는 150분 이상입니다. 입장 확약권이 있어야 닌텐도 존에 들어갈 수 있으니, 앱이나 현장에서 QR 예약을 먼저 해야 합니다."
-                    },
-                    {
-                        "Q": "USJ 해리포터 구역은 입장 제한이 있나요?",
-                        "A": "성수기에는 해리포터 존도 닌텐도 존처럼 입장 정리권이 필요합니다. 입장권만 있다고 바로 들어갈 수 없으니, 앱에서 예약하거나 직원 안내에 따라 QR을 받아야 합니다."
-                    },
-                    {
-                        "Q": "USJ 익스프레스패스 7은 어떤 어트랙션이 포함되나요?",
-                        "A": "익스프레스패스 7은 닌텐도 월드, 해리포터 구역, 미니언 파크, 주라기 월드 등 주요 어트랙션 7개를 빠르게 이용할 수 있습니다. 가격은 시기에 따라 다르므로 공식 홈페이지에서 확인하세요."
-                    },
-                    {
-                        "Q": "USJ 내 레스토랑 예약은 어떻게 하나요?",
-                        "A": "USJ 공식 앱이나 웹사이트에서 사전 예약이 가능합니다. 특히 닌텐도 월드의 키노피오 카페는 사전 예약이 거의 필수입니다. 당일 현장 대기도 가능하지만 대기 시간이 길 수 있습니다."
-                    }
-                ];
-                
-                allQuestions = usjQAData.map(item => item.Q);
-                
-                console.log(`🔧 폴백 데이터 ${allQuestions.length}개 질문으로 초기화`);
-                
-                // 첫 번째 랜덤 질문 세트 생성
-                showNewRandomQuestions();
-            }
+            console.log('🔄 Q&A 데이터 로드 시작...');
+            const response = await fetch('./usj_qa.json');
+            
+            usjQAData = await response.json();
+            allQuestions = usjQAData.map(item => item.Q);
+            
+            console.log(`✅ ${allQuestions.length}개 질문 로드 완료`);
+            
+            // 질문 풀 초기화
+            initializeQuestionPool();
+            
+            // 첫 번째 랜덤 질문 세트 생성
+            showNewRandomQuestions();
         }
 
         // Q&A 데이터에서 답변 찾기
