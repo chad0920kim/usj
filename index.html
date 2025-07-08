@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USJ 챗봇 MRK23</title>
+    <title>USJ 챗봇 MRK24</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -349,7 +349,7 @@
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <h1>🎢 USJ 챗봇 MRK23</h1>
+            <h1>🎢 USJ 챗봇 MRK24</h1>
             <div class="subtitle">유니버셜스튜디오 재팬 전문 상담</div>
         </div>
         
@@ -391,11 +391,11 @@
         // 질문 관리 변수들
         let usjQAData = [];
         let allQuestions = [];
-        let questionPool = [];
         let currentQuestions = [];
         let questionHistory = [];
         let historyIndex = -1;
-        let usedQuestions = new Set();
+        let questionIndex = 0; // 현재 질문 인덱스
+        let shuffledQuestions = []; // 섞인 전체 질문 배열
 
         // JSON 파일 로드
         async function loadQAData() {
@@ -412,8 +412,8 @@
                 
                 console.log(`✅ ${allQuestions.length}개 질문 로드 완료`);
                 
-                // 질문 풀 초기화
-                initializeQuestionPool();
+                // 질문 배열 초기화
+                initializeShuffledQuestions();
                 
                 // 첫 질문 세트 생성
                 updateQuickQuestions();
@@ -445,46 +445,46 @@
                 
                 console.log(`🔧 폴백 데이터 ${allQuestions.length}개 질문으로 초기화`);
                 
-                initializeQuestionPool();
+                initializeShuffledQuestions();
                 updateQuickQuestions();
                 updateControlButtons();
             }
         }
 
-        // 질문 풀 초기화 (Fisher-Yates 셔플)
-        function initializeQuestionPool() {
-            console.log('🔀 질문 풀 초기화 중...');
-            questionPool = [...allQuestions];
+        // 섞인 질문 배열 초기화
+        function initializeShuffledQuestions() {
+            console.log('🔀 질문 배열 섞기 시작...');
             
-            // Fisher-Yates 셔플 알고리즘
-            for (let i = questionPool.length - 1; i > 0; i--) {
+            // 전체 질문을 복사하고 섞기
+            shuffledQuestions = [...allQuestions];
+            
+            // Fisher-Yates 셔플
+            for (let i = shuffledQuestions.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
-                [questionPool[i], questionPool[j]] = [questionPool[j], questionPool[i]];
+                [shuffledQuestions[i], shuffledQuestions[j]] = [shuffledQuestions[j], shuffledQuestions[i]];
             }
             
-            console.log(`✅ ${questionPool.length}개 질문이 섞였습니다`);
+            questionIndex = 0;
+            console.log(`✅ ${shuffledQuestions.length}개 질문이 섞였습니다`);
+            console.log('📋 섞인 질문 미리보기:', shuffledQuestions.slice(0, 10));
         }
 
-        // 질문 풀에서 랜덤 질문 가져오기
-        function getNextQuestions(count = 2) {
-            // 풀이 부족하면 재초기화
-            if (questionPool.length < count) {
-                console.log('🔄 질문 풀이 부족하여 재초기화');
-                initializeQuestionPool();
-                usedQuestions.clear(); // 사용된 질문 기록 초기화
+        // 다음 2개 질문 가져오기 (순차적)
+        function getNextTwoQuestions() {
+            // 질문이 부족하면 다시 섞기
+            if (questionIndex >= shuffledQuestions.length - 1) {
+                console.log('🔄 모든 질문 사용완료 - 재섞기');
+                initializeShuffledQuestions();
             }
             
-            const selectedQuestions = [];
+            const question1 = shuffledQuestions[questionIndex];
+            const question2 = shuffledQuestions[questionIndex + 1] || shuffledQuestions[0];
             
-            for (let i = 0; i < count && questionPool.length > 0; i++) {
-                const randomIndex = Math.floor(Math.random() * questionPool.length);
-                const selectedQuestion = questionPool.splice(randomIndex, 1)[0];
-                selectedQuestions.push(selectedQuestion);
-                usedQuestions.add(selectedQuestion);
-            }
+            questionIndex += 2;
             
-            console.log(`📋 새 질문 선택:`, selectedQuestions);
-            console.log(`📊 남은 질문 풀: ${questionPool.length}개`);
+            const selectedQuestions = [question1, question2];
+            console.log(`📋 선택된 질문:`, selectedQuestions);
+            console.log(`📊 현재 인덱스: ${questionIndex}/${shuffledQuestions.length}`);
             
             return selectedQuestions;
         }
@@ -493,7 +493,7 @@
         function updateQuickQuestions() {
             console.log('🔄 Quick Questions 업데이트 중...');
             
-            const newQuestions = getNextQuestions(2);
+            const newQuestions = getNextTwoQuestions();
             
             // 현재 질문이 있으면 히스토리에 저장
             if (currentQuestions.length > 0) {
@@ -507,7 +507,7 @@
             renderQuestions();
             updateControlButtons();
             
-            console.log(`✅ 현재 질문: ${currentQuestions.length}개`);
+            console.log(`✅ 현재 질문: ${currentQuestions.join(' | ')}`);
             console.log(`📚 히스토리: ${questionHistory.length}개`);
         }
 
