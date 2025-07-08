@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USJ 챗봇 MRK20-1</title>
+    <title>USJ 챗봇 MRK20-2</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -349,7 +349,7 @@
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <h1>🎢 USJ 챗봇 MRK20-1</h1>
+            <h1>🎢 USJ 챗봇 MRK20-2</h1>
             <div class="subtitle">유니버셜스튜디오 재팬 전문 상담</div>
         </div>
         
@@ -577,30 +577,26 @@
             
             if (relatedToMessage) {
                 const relatedQuestions = getRelatedQuestions(relatedToMessage, 1);
+                console.log('🔗 관련 질문 찾음:', relatedQuestions);
+                
                 if (relatedQuestions.length > 0) {
                     newQuestions.push(relatedQuestions[0]);
+                    console.log('✅ 관련 질문 1개 추가:', relatedQuestions[0]);
                 }
                 
+                // 나머지는 완전 랜덤으로 선택 (관련성 무시)
                 const excludeQuestions = [...currentQuestions, relatedToMessage, ...relatedQuestions];
-                const randomQuestions = getRandomQuestions(3, excludeQuestions);
-                if (randomQuestions.length > 0) {
-                    newQuestions.push(randomQuestions[0]);
-                }
+                const randomQuestions = getRandomQuestions(2 - newQuestions.length, excludeQuestions);
+                newQuestions.push(...randomQuestions);
+                console.log('🎲 랜덤 질문 추가:', randomQuestions);
                 
-                while (newQuestions.length < 2 && newQuestions.length < usjQuestions.length) {
-                    const additionalRandom = getRandomQuestions(1, [...currentQuestions, ...newQuestions]);
-                    if (additionalRandom.length > 0) {
-                        newQuestions.push(additionalRandom[0]);
-                    } else {
-                        break;
-                    }
-                }
             } else {
                 // 초기 로드 시 완전 랜덤
                 newQuestions = getRandomQuestions(2, currentQuestions);
+                console.log('🆕 초기 랜덤 질문:', newQuestions);
             }
             
-            console.log('✅ 새로운 질문들:', newQuestions);
+            console.log('✅ 최종 새로운 질문들:', newQuestions);
             
             if (currentQuestions.length > 0 && JSON.stringify(currentQuestions) !== JSON.stringify(newQuestions)) {
                 questionHistory = questionHistory.slice(0, historyIndex + 1);
