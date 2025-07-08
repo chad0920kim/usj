@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>USJ 챗봇 MRK20-7</title>
+  <title>USJ 챗봇 MRK20-8</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -121,7 +121,7 @@
 <body>
   <div class="chat-container">
     <div class="chat-header">
-      <h1>🎢 USJ 챗봇 MRK20-7</h1>
+      <h1>🎢 USJ 챗봇 MRK20-8</h1>
       <div class="subtitle">유니버셜스튜디오 재팬 전문 상담</div>
     </div>
     <div class="chat-messages" id="chatMessages">
@@ -161,33 +161,41 @@
 
   async function loadQAData() {
     try {
-      // ✅ 경로는 무조건 상대경로로 고정
-      const jsonURL = './usj_qa.json';
-      console.log('✅ JSON 요청 URL:', jsonURL);
-
-      const response = await fetch(jsonURL);
+      const txtURL = './usj_qa.txt'; // ✅ TXT 경로로 고정
+      const response = await fetch(txtURL);
       console.log('✅ Fetch 상태:', response.status, response.statusText);
 
       if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
-      const text = await response.text();
-      console.log('✅ Raw JSON:', text.substring(0, 100) + '...');
-      
-      usjQAData = JSON.parse(text);
-      console.log('✅ JSON 파싱:', usjQAData);
+      const rawText = await response.text();
+      console.log('✅ Raw TXT:', rawText.substring(0, 200) + '...');
+
+      // --- 로 구분하여 블록 분리
+      const blocks = rawText.split('---').map(block => block.trim()).filter(Boolean);
+
+      usjQAData = blocks.map(block => {
+        const qMatch = block.match(/Q:\s*([\s\S]*?)\nA:/);
+        const aMatch = block.match(/A:\s*([\s\S]*)/);
+        return {
+          Q: qMatch ? qMatch[1].trim().replace(/\n/g, ' ') : '',
+          A: aMatch ? aMatch[1].trim() : ''
+        };
+      });
+
+      console.log('✅ Parsed Q&A:', usjQAData);
 
       usjQuestions = usjQAData.map(item => item.Q);
-      console.log(`✅ 질문 개수: ${usjQuestions.length}`);
+      console.log(`✅ 총 질문: ${usjQuestions.length}개`);
 
       if (usjQuestions.length === 0) {
-        throw new Error('⚠️ JSON 파싱은 됐지만 질문이 없습니다.');
+        throw new Error('⚠️ 파싱은 됐지만 질문이 없습니다.');
       }
 
       updateQuickQuestions();
       updateControlButtons();
     } catch (error) {
-      console.error('❌ Q&A 데이터 로드 실패:', error);
-      showError('질문 데이터를 불러오지 못했습니다. 경로 또는 JSON 형식을 다시 확인해주세요.');
+      console.error('❌ Q&A TXT 로드 실패:', error);
+      showError('질문 데이터를 불러오지 못했습니다. TXT 경로와 형식을 다시 확인해주세요.');
     }
   }
 
@@ -356,6 +364,7 @@
     loadQAData();
   });
 </script>
+
 
 </body>
 </html>
