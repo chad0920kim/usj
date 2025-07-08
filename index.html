@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USJ 챗봇 MRK20</title>
+    <title>USJ 챗봇 MRK20-1</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -349,7 +349,7 @@
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <h1>🎢 USJ 챗봇 MRK20</h1>
+            <h1>🎢 USJ 챗봇 MRK20-1</h1>
             <div class="subtitle">유니버셜스튜디오 재팬 전문 상담</div>
         </div>
         
@@ -545,8 +545,22 @@
                 return [];
             }
             
-            const availableQuestions = usjQuestions.filter(q => !excludeQuestions.includes(q));
+            // 제외할 질문이 너무 많으면 최근 몇 개만 제외
+            let actualExclude = excludeQuestions;
+            if (excludeQuestions.length > usjQuestions.length * 0.8) {
+                actualExclude = excludeQuestions.slice(-10); // 최근 10개만 제외
+                console.log('📝 제외 목록이 너무 길어서 최근 10개만 제외합니다');
+            }
+            
+            const availableQuestions = usjQuestions.filter(q => !actualExclude.includes(q));
             console.log(`🎲 랜덤 질문 선택: 총 ${usjQuestions.length}개 중 ${availableQuestions.length}개 사용 가능`);
+            console.log('제외된 질문 수:', actualExclude.length);
+            
+            if (availableQuestions.length === 0) {
+                console.log('⚠️ 사용 가능한 질문이 없어서 전체에서 재선택');
+                const shuffled = [...usjQuestions].sort(() => 0.5 - Math.random());
+                return shuffled.slice(0, count);
+            }
             
             const shuffled = [...availableQuestions].sort(() => 0.5 - Math.random());
             const selected = shuffled.slice(0, count);
@@ -629,14 +643,13 @@
         
         // 다음 질문 보기
         function showNextQuestions() {
+            // 현재 질문만 제외하고 새로운 랜덤 질문 선택
             const excludeQuestions = [...currentQuestions];
-            if (historyIndex >= 0) {
-                excludeQuestions.push(...questionHistory[historyIndex]);
-            }
             
             const newQuestions = getRandomQuestions(2, excludeQuestions);
             
             if (newQuestions.length > 0) {
+                // 현재 질문을 히스토리에 저장
                 if (currentQuestions.length > 0) {
                     questionHistory = questionHistory.slice(0, historyIndex + 1);
                     questionHistory.push([...currentQuestions]);
@@ -646,6 +659,10 @@
                 currentQuestions = newQuestions;
                 renderQuestions();
                 updateControlButtons();
+                
+                console.log('🔄 새로운 질문으로 변경:', newQuestions);
+            } else {
+                console.log('⚠️ 더 이상 새로운 질문이 없습니다');
             }
         }
         
