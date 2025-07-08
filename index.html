@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USJ 챗봇 MRK27</title>
+    <title>USJ 챗봇 MRK19</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -349,7 +349,7 @@
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <h1>🎢 USJ 챗봇 MRK27</h1>
+            <h1>🎢 USJ 챗봇 MRK19</h1>
             <div class="subtitle">유니버셜스튜디오 재팬 전문 상담</div>
         </div>
         
@@ -381,222 +381,472 @@
         </div>
     </div>
 
-   <script>
-  // ✅ 기본 설정
-  const API_URL = 'https://usj-chatbot.run.goorm.site';
-  let chatId = 'user_' + Date.now();
-  let isProcessing = false;
-  let shouldAutoScroll = true;
-
-  let usjQAData = [];
-  let usjQuestions = [];
-  let currentQuestions = [];
-  let questionHistory = [];
-  let historyIndex = -1;
-
-  // ✅ Q&A 데이터 로드
-  async function loadQAData() {
-    try {
-      const response = await fetch('./usj_qa.json');
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      usjQAData = await response.json();
-      usjQuestions = usjQAData.map(item => item.Q);
-
-      initQuickQuestions();
-
-    } catch (error) {
-      console.error('Q&A 데이터 로드 실패:', error);
-      usjQAData = [
-        { Q: "USJ 입장 시 캐리어를 맡길 수 있나요?", A: "정문 우측 외부에 대형 코인 락커가 있고 ..." },
-        { Q: "USJ에서 당일 입장권도 구매할 수 있나요?", A: "가능합니다. 하지만 당일 판매는 ..." }
-      ];
-      usjQuestions = usjQAData.map(item => item.Q);
-      initQuickQuestions();
-    }
-  }
-
-  // ✅ Quick Questions 초기화
-  function initQuickQuestions() {
-    currentQuestions = getRandomQuestions(2);
-    questionHistory = [ [...currentQuestions] ];
-    historyIndex = 0;
-    renderQuestions();
-    updateControlButtons();
-  }
-
-  // ✅ 랜덤 질문 가져오기 (Fisher-Yates)
-  function getRandomQuestions(count = 2, exclude = []) {
-    const pool = usjQuestions.filter(q => !exclude.includes(q));
-    const shuffled = [...pool];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled.slice(0, count);
-  }
-
-  // ✅ Quick Questions 렌더링
-  function renderQuestions() {
-    const container = document.querySelector('.quick-questions');
-    container.innerHTML = '';
-    currentQuestions.forEach(q => {
-      const btn = document.createElement('button');
-      btn.className = 'quick-btn';
-      btn.textContent = q;
-      btn.onclick = () => sendQuick(q);
-      container.appendChild(btn);
-    });
-  }
-
-  // ✅ 버튼 상태 업데이트
-  function updateControlButtons() {
-    document.getElementById('prevBtn').disabled = historyIndex <= 0;
-    document.getElementById('nextBtn').disabled = false;
-  }
-
-  // ✅ 이전 질문
-  function showPreviousQuestions() {
-    if (historyIndex > 0) {
-      historyIndex--;
-      currentQuestions = [...questionHistory[historyIndex]];
-      renderQuestions();
-      updateControlButtons();
-    }
-  }
-
-  // ✅ 다음 질문 (랜덤 생성 또는 기존)
-  function showNextQuestions() {
-    if (historyIndex < questionHistory.length - 1) {
-      historyIndex++;
-      currentQuestions = [...questionHistory[historyIndex]];
-    } else {
-      const newQ = getRandomQuestions(2, currentQuestions);
-      questionHistory.push([...newQ]);
-      currentQuestions = [...newQ];
-      historyIndex++;
-    }
-    renderQuestions();
-    updateControlButtons();
-  }
-
-  // ✅ 메시지 전송
-  async function sendMessage() {
-    if (isProcessing) return;
-
-    const input = document.getElementById('messageInput');
-    const msg = input.value.trim();
-    if (!msg) return;
-
-    isProcessing = true;
-    shouldAutoScroll = true;
-    input.value = '';
-    document.getElementById('sendBtn').textContent = '전송중...';
-
-    addMessage(msg, 'user');
-
-    const answer = usjQAData.find(item => item.Q === msg)?.A;
-    if (answer) {
-      addMessage(`${answer}\n\n※ 이 답변은 미리 준비된 내용입니다.`, 'bot');
-      updateQuickQuestions();
-      endProcessing();
-      return;
-    }
-
-    try {
-      const res = await fetch(`${API_URL}/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: msg, chat_id: chatId })
-      });
-      if (!res.ok) throw new Error('서버 오류');
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let botMsg = addMessage('', 'bot');
-      let full = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
-        for (const line of lines) {
-          if (line.startsWith('data: ') && !line.includes('[DONE]')) {
-            const data = JSON.parse(line.slice(6));
-            const content = data.choices?.[0]?.delta?.content || '';
-            full += content;
-            botMsg.querySelector('.message-content').innerHTML = full.replace(/\n/g, '<br>');
-            if (shouldAutoScroll) scrollToBottom();
-          }
+    <script>
+        // 디바이스 감지
+        function isMobile() {
+            return window.innerWidth <= 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         }
-      }
-      updateQuickQuestions();
-    } catch (e) {
-      showError(e.message);
-    } finally {
-      endProcessing();
-    }
-  }
+        
+        // 심플한 설정
+        const API_URL = 'https://usj-chatbot.run.goorm.site';
+        let chatId = 'user_' + Date.now();
+        let isProcessing = false;
+        let shouldAutoScroll = true;
+        
+        // USJ Q&A 데이터
+        let usjQAData = [];
+        let usjQuestions = [];
+        let currentQuestions = [];
+        let questionHistory = [];
+        let historyIndex = -1;
+        
+        // JSON 파일에서 Q&A 데이터 로드
+        async function loadQAData() {
+            try {
+                console.log('Q&A 데이터 로드 시도 중...');
+                const response = await fetch('./usj_qa.json');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                usjQAData = await response.json();
+                usjQuestions = usjQAData.map(item => item.Q);
+                
+                console.log(`${usjQuestions.length}개 질문 로드됨`);
+                
+                // 초기 질문 설정
+                updateQuickQuestions();
+                updateControlButtons();
+            } catch (error) {
+                console.error('Q&A 데이터 로드 실패:', error);
+                
+                // 최소한의 기본 질문으로 폴백
+                usjQAData = [
+                    {
+                        "Q": "USJ 입장 시 캐리어를 맡길 수 있는 곳이 있나요?",
+                        "A": "정문 우측 외부에 대형 코인 락커가 있고, 사이즈에 따라 400~1,200엔입니다. 만석 시에는 유니버설 시티역 주변 상업시설 내 락커도 대안입니다."
+                    },
+                    {
+                        "Q": "USJ에서 당일 입장권도 구매할 수 있나요?",
+                        "A": "가능합니다. 하지만 당일 판매는 조기 매진 가능성이 크며, 특히 익스프레스 패스는 온라인 사전 구매 없이는 거의 불가능합니다."
+                    },
+                    {
+                        "Q": "USJ에서 마리오 카트 어트랙션은 얼마나 기다려야 하나요?",
+                        "A": "평균 대기 시간은 평일 60~90분, 주말 및 일본 연휴에는 150분 이상입니다. 입장 확약권이 있어야 닌텐도 존에 들어갈 수 있으니, 앱이나 현장에서 QR 예약을 먼저 해야 합니다."
+                    },
+                    {
+                        "Q": "USJ 해리포터 구역은 입장 제한이 있나요?",
+                        "A": "성수기에는 해리포터 존도 닌텐도 존처럼 입장 정리권이 필요합니다. 입장권만 있다고 바로 들어갈 수 없으니, 앱에서 예약하거나 직원 안내에 따라 QR을 받아야 합니다."
+                    }
+                ];
+                usjQuestions = usjQAData.map(item => item.Q);
+                
+                console.log(`기본 질문 ${usjQuestions.length}개로 폴백`);
+                updateQuickQuestions();
+                updateControlButtons();
+            }
+        }
+        
+        // Q&A 데이터에서 답변 찾기
+        function findAnswerFromQA(question) {
+            const qaItem = usjQAData.find(item => item.Q === question);
+            return qaItem ? qaItem.A : null;
+        }
+        
+        // 키워드 매칭 함수
+        function getKeywordsFromMessage(message) {
+            const keywords = [];
+            const text = message.toLowerCase();
+            
+            const keywordMap = {
+                "마리오": ["마리오", "닌텐도", "nintendo", "카트"],
+                "캐리어": ["캐리어", "짐", "수하물", "보관"],
+                "해리포터": ["해리포터", "포터", "마법"],
+                "어린이": ["어린이", "아이", "아기", "유아"],
+                "식당": ["식당", "음식", "식사", "레스토랑"],
+                "입장권": ["입장권", "티켓", "패스"],
+                "교통": ["교통", "지하철", "역", "이동"],
+                "익스프레스": ["익스프레스", "express"],
+                "촬영": ["촬영", "사진", "카메라"],
+                "퍼레이드": ["퍼레이드", "쇼", "공연"],
+                "대기": ["대기", "줄", "기다리"],
+                "앱": ["앱", "어플"],
+                "호텔": ["호텔", "숙소"],
+                "비": ["비", "우천", "날씨"],
+                "할인": ["할인", "외국인"],
+                "시간": ["시간", "운영", "개장"]
+            };
+            
+            for (const [key, values] of Object.entries(keywordMap)) {
+                if (values.some(v => text.includes(v))) {
+                    keywords.push(key);
+                }
+            }
+            
+            return keywords;
+        }
+        
+        // 관련 질문 찾기 함수
+        function getRelatedQuestions(userMessage, count = 2) {
+            if (usjQuestions.length === 0) return [];
+            
+            const keywords = getKeywordsFromMessage(userMessage);
+            const relatedQuestions = [];
+            
+            for (const question of usjQuestions) {
+                for (const keyword of keywords) {
+                    if (question.toLowerCase().includes(keyword) && 
+                        !relatedQuestions.includes(question) &&
+                        question !== userMessage) {
+                        relatedQuestions.push(question);
+                        break;
+                    }
+                }
+            }
+            
+            if (relatedQuestions.length < count) {
+                const remainingNeeded = count - relatedQuestions.length;
+                const randomQuestions = getRandomQuestions(remainingNeeded * 2, relatedQuestions.concat([userMessage]));
+                relatedQuestions.push(...randomQuestions.slice(0, remainingNeeded));
+            }
+            
+            return relatedQuestions.slice(0, count);
+        }
+        
+        // 랜덤 질문 선택 함수
+        function getRandomQuestions(count = 2, excludeQuestions = []) {
+            if (usjQuestions.length === 0) return [];
+            
+            const availableQuestions = usjQuestions.filter(q => !excludeQuestions.includes(q));
+            const shuffled = [...availableQuestions].sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, count);
+        }
+        
+        // 빠른 질문 업데이트 함수
+        function updateQuickQuestions(relatedToMessage = null) {
+            let newQuestions = [];
+            
+            if (relatedToMessage) {
+                const relatedQuestions = getRelatedQuestions(relatedToMessage, 1);
+                if (relatedQuestions.length > 0) {
+                    newQuestions.push(relatedQuestions[0]);
+                }
+                
+                const excludeQuestions = [...currentQuestions, relatedToMessage, ...relatedQuestions];
+                const randomQuestions = getRandomQuestions(3, excludeQuestions);
+                if (randomQuestions.length > 0) {
+                    newQuestions.push(randomQuestions[0]);
+                }
+                
+                while (newQuestions.length < 2 && newQuestions.length < usjQuestions.length) {
+                    const additionalRandom = getRandomQuestions(1, [...currentQuestions, ...newQuestions]);
+                    if (additionalRandom.length > 0) {
+                        newQuestions.push(additionalRandom[0]);
+                    } else {
+                        break;
+                    }
+                }
+            } else {
+                newQuestions = getRandomQuestions(2, currentQuestions);
+            }
+            
+            if (currentQuestions.length > 0 && JSON.stringify(currentQuestions) !== JSON.stringify(newQuestions)) {
+                questionHistory = questionHistory.slice(0, historyIndex + 1);
+                questionHistory.push([...currentQuestions]);
+                historyIndex = questionHistory.length - 1;
+            }
+            
+            currentQuestions = newQuestions;
+            renderQuestions();
+            updateControlButtons();
+        }
+        
+        // 질문 렌더링 함수
+        function renderQuestions() {
+            const quickQuestionsContainer = document.querySelector('.quick-questions');
+            if (!quickQuestionsContainer) return;
+            
+            quickQuestionsContainer.innerHTML = '';
+            
+            currentQuestions.forEach(question => {
+                const button = document.createElement('button');
+                button.className = 'quick-btn';
+                button.textContent = question;
+                button.onclick = () => sendQuick(question);
+                quickQuestionsContainer.appendChild(button);
+            });
+        }
+        
+        // 이전 질문 보기
+        function showPreviousQuestions() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                currentQuestions = [...questionHistory[historyIndex]];
+                renderQuestions();
+                updateControlButtons();
+            }
+        }
+        
+        // 다음 질문 보기
+        function showNextQuestions() {
+            const excludeQuestions = [...currentQuestions];
+            if (historyIndex >= 0) {
+                excludeQuestions.push(...questionHistory[historyIndex]);
+            }
+            
+            const newQuestions = getRandomQuestions(2, excludeQuestions);
+            
+            if (newQuestions.length > 0) {
+                if (currentQuestions.length > 0) {
+                    questionHistory = questionHistory.slice(0, historyIndex + 1);
+                    questionHistory.push([...currentQuestions]);
+                    historyIndex = questionHistory.length - 1;
+                }
+                
+                currentQuestions = newQuestions;
+                renderQuestions();
+                updateControlButtons();
+            }
+        }
+        
+        // 컨트롤 버튼 상태 업데이트
+        function updateControlButtons() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            if (prevBtn) {
+                prevBtn.disabled = historyIndex <= 0;
+            }
+            
+            if (nextBtn) {
+                nextBtn.disabled = false;
+            }
+        }
+        
+        // 자동 스크롤 함수
+        function scrollToBottom() {
+            const messages = document.getElementById('chatMessages');
+            messages.scrollTop = messages.scrollHeight;
+        }
+        
+        // 사용자가 수동으로 스크롤했는지 감지
+        function setupScrollListener() {
+            const messages = document.getElementById('chatMessages');
+            
+            messages.addEventListener('scroll', () => {
+                const isAtBottom = messages.scrollHeight - messages.scrollTop <= messages.clientHeight + 50;
+                shouldAutoScroll = isAtBottom;
+            });
+        }
+        
+        // 디바이스별 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            setupScrollListener();
+            loadQAData();
+            
+            if (isMobile()) {
+                console.log('📱 모바일 디바이스 감지');
+                
+                const chatMessages = document.getElementById('chatMessages');
+                chatMessages.style.webkitOverflowScrolling = 'touch';
+                chatMessages.style.scrollBehavior = 'smooth';
+                
+                const setViewHeight = () => {
+                    const vh = window.innerHeight * 0.01;
+                    document.documentElement.style.setProperty('--vh', `${vh}px`);
+                };
+                
+                setViewHeight();
+                window.addEventListener('resize', setViewHeight);
+                
+                setTimeout(() => {
+                    scrollToBottom();
+                }, 100);
+                
+            } else {
+                console.log('💻 데스크톱 디바이스 감지');
+            }
+        });
 
-  // ✅ 빠른 질문 전송
-  function sendQuick(q) {
-    document.getElementById('messageInput').value = q;
-    sendMessage();
-  }
+        // 빠른 질문
+        function sendQuick(question) {
+            document.getElementById('messageInput').value = question;
+            sendMessage(true); // 빠른 질문임을 표시
+        }
 
-  // ✅ 메시지 추가
-  function addMessage(content, type) {
-    const wrap = document.getElementById('chatMessages');
-    const div = document.createElement('div');
-    div.className = `message ${type}`;
-    div.innerHTML = `<div class="message-content">${content.replace(/\n/g, '<br>')}</div>`;
-    wrap.appendChild(div);
-    scrollToBottom();
-    return div;
-  }
+        // 엔터키 처리
+        function handleEnter(event) {
+            if (event.key === 'Enter' && !isProcessing) {
+                sendMessage();
+            }
+        }
 
-  // ✅ 자동 스크롤
-  function scrollToBottom() {
-    const wrap = document.getElementById('chatMessages');
-    wrap.scrollTop = wrap.scrollHeight;
-  }
+        // 메시지 전송
+        async function sendMessage(isQuickQuestion = false) {
+            if (isProcessing) return;
+            
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            isProcessing = true;
+            shouldAutoScroll = true;
+            input.value = '';
+            document.getElementById('sendBtn').textContent = '전송중...';
+            
+            addMessage(message, 'user');
+            
+            if (isMobile()) {
+                input.blur();
+            }
 
-  // ✅ 오류 메시지
-  function showError(msg) {
-    const wrap = document.getElementById('chatMessages');
-    const div = document.createElement('div');
-    div.className = 'error-message';
-    div.textContent = '❗ ' + msg;
-    wrap.appendChild(div);
-    scrollToBottom();
-  }
+            try {
+                // 먼저 JSON 데이터에서 답변 찾기
+                const answer = findAnswerFromQA(message);
+                
+                if (answer) {
+                    // JSON에서 찾은 답변이 있으면 바로 표시
+                    let displayText = answer;
+                    if (displayText.includes('※ 이 답변은 AI가 안내한 내용으로')) {
+                        displayText = displayText.replace(
+                            '※ 이 답변은 AI가 안내한 내용으로', 
+                            '\n\n※ 이 답변은 AI가 안내한 내용으로'
+                        );
+                    } else {
+                        // 준비된 답변에 안내 메시지 추가
+                        displayText += '\n\n※ 이 답변은 미리 준비된 내용입니다. 추가 질문이 있으시면 언제든 말씀해주세요!';
+                    }
+                    
+                    const botMessage = addMessage('', 'bot');
+                    botMessage.querySelector('.message-content').innerHTML = displayText.replace(/\n/g, '<br>');
+                    
+                    // 관련 질문 업데이트
+                    updateQuickQuestions(message);
+                } else {
+                    // JSON에서 답변을 찾지 못한 경우 기존 API 호출
+                    const response = await fetch(`${API_URL}/chat`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message, chat_id: chatId })
+                    });
 
-  // ✅ 처리 종료
-  function endProcessing() {
-    isProcessing = false;
-    document.getElementById('sendBtn').textContent = '전송';
-  }
+                    if (!response.ok) throw new Error('서버 오류');
 
-  // ✅ 엔터키
-  function handleEnter(e) {
-    if (e.key === 'Enter' && !isProcessing) sendMessage();
-  }
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let botMessage = addMessage('', 'bot');
+                    let fullResponse = '';
 
-  // ✅ 스크롤 상태 감지
-  function setupScrollListener() {
-    const wrap = document.getElementById('chatMessages');
-    wrap.addEventListener('scroll', () => {
-      shouldAutoScroll = wrap.scrollHeight - wrap.scrollTop <= wrap.clientHeight + 50;
-    });
-  }
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
 
-  // ✅ 초기화
-  document.addEventListener('DOMContentLoaded', () => {
-    setupScrollListener();
-    loadQAData();
-  });
-</script>
+                        const chunk = decoder.decode(value);
+                        const lines = chunk.split('\n');
 
+                        for (const line of lines) {
+                            if (line.startsWith('data: ') && !line.includes('[DONE]')) {
+                                try {
+                                    const data = JSON.parse(line.slice(6));
+                                    const content = data.choices?.[0]?.delta?.content || '';
+                                    if (content) {
+                                        fullResponse += content;
+                                        
+                                        let displayText = fullResponse;
+                                        if (displayText.includes('※ 이 답변은 AI가 안내한 내용으로')) {
+                                            displayText = displayText.replace(
+                                                '※ 이 답변은 AI가 안내한 내용으로', 
+                                                '\n\n※ 이 답변은 AI가 안내한 내용으로'
+                                            );
+                                        }
+                                        
+                                        botMessage.querySelector('.message-content').innerHTML = displayText.replace(/\n/g, '<br>');
+                                        
+                                        if (shouldAutoScroll) {
+                                            scrollToBottom();
+                                        }
+                                    }
+                                } catch (e) {}
+                            }
+                        }
+                    }
+                    
+                    // API 응답 후에도 관련 질문 업데이트
+                    updateQuickQuestions(message);
+                }
+
+            } catch (error) {
+                showError('연결 오류: ' + error.message);
+            } finally {
+                isProcessing = false;
+                document.getElementById('sendBtn').textContent = '전송';
+                
+                if (shouldAutoScroll) {
+                    setTimeout(() => scrollToBottom(), 100);
+                }
+            }
+        }
+
+        // 메시지 추가
+        function addMessage(content, type) {
+            const messages = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = `message ${type}`;
+            div.innerHTML = `<div class="message-content">${content}</div>`;
+            messages.appendChild(div);
+            
+            if (shouldAutoScroll) {
+                scrollToBottom();
+            }
+            
+            return div;
+        }
+
+        // 오류 표시
+        function showError(message) {
+            const messages = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'error-message';
+            div.textContent = message;
+            messages.appendChild(div);
+            
+            if (shouldAutoScroll) {
+                scrollToBottom();
+            }
+        }
+        
+        // 화면 크기 변경 감지
+        window.addEventListener('resize', function() {
+            if (shouldAutoScroll) {
+                setTimeout(() => scrollToBottom(), 100);
+            }
+        });
+        
+        // 모바일 키보드 대응
+        if (isMobile()) {
+            let initialViewportHeight = window.innerHeight;
+            
+            window.addEventListener('resize', function() {
+                const currentHeight = window.innerHeight;
+                const heightDifference = initialViewportHeight - currentHeight;
+                
+                if (heightDifference > 150) {
+                    setTimeout(() => {
+                        if (shouldAutoScroll) {
+                            scrollToBottom();
+                        }
+                    }, 300);
+                }
+                else if (heightDifference < 50) {
+                    setTimeout(() => {
+                        if (shouldAutoScroll) {
+                            scrollToBottom();
+                        }
+                    }, 100);
+                }
+            });
+        }
+    </script>
 </body>
 </html>
