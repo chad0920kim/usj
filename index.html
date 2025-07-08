@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>USJ 챗봇 MRK20-8</title>
+  <title>USJ 챗봇 MRK20-9</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -121,7 +121,7 @@
 <body>
   <div class="chat-container">
     <div class="chat-header">
-      <h1>🎢 USJ 챗봇 MRK20-8</h1>
+      <h1>🎢 USJ 챗봇 MRK20-9</h1>
       <div class="subtitle">유니버셜스튜디오 재팬 전문 상담</div>
     </div>
     <div class="chat-messages" id="chatMessages">
@@ -147,7 +147,7 @@
     </div>
   </div>
 
- <script>
+<script>
   const API_URL = 'https://usj-chatbot.run.goorm.site';
   let chatId = 'user_' + Date.now();
   let isProcessing = false;
@@ -161,7 +161,7 @@
 
   async function loadQAData() {
     try {
-      const txtURL = './usj_qa.txt'; // ✅ TXT 경로로 고정
+      const txtURL = './usj_qa.txt'; // ✅ TXT 경로 고정
       const response = await fetch(txtURL);
       console.log('✅ Fetch 상태:', response.status, response.statusText);
 
@@ -170,7 +170,6 @@
       const rawText = await response.text();
       console.log('✅ Raw TXT:', rawText.substring(0, 200) + '...');
 
-      // --- 로 구분하여 블록 분리
       const blocks = rawText.split('---').map(block => block.trim()).filter(Boolean);
 
       usjQAData = blocks.map(block => {
@@ -286,7 +285,10 @@
       const answer = findAnswerFromQA(message);
       if (answer) {
         const botMessage = addMessage('', 'bot');
-        botMessage.querySelector('.message-content').innerHTML = answer.replace(/\n/g, '<br>') + '<br><br>※ 미리 준비된 답변입니다.';
+        botMessage.querySelector('.message-content').innerHTML =
+          answer.replace(/\n/g, '<br>') +
+          '<br><br><span style="font-size:0.85em;color:#555;">이 정보는 사전에 준비된 답변입니다. 더 궁금한 점이 있으면 언제든지 말씀해주세요!</span>';
+        scrollToBottom(); // ✅ 스크롤 강제
       } else {
         const response = await fetch(`${API_URL}/chat`, {
           method: 'POST',
@@ -364,7 +366,6 @@
     loadQAData();
   });
 </script>
-
 
 </body>
 </html>
