@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>USJ 챗봇 MRK20-6</title>
+  <title>USJ 챗봇 MRK20-7</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -121,7 +121,7 @@
 <body>
   <div class="chat-container">
     <div class="chat-header">
-      <h1>🎢 USJ 챗봇 MRK20-6</h1>
+      <h1>🎢 USJ 챗봇 MRK20-7</h1>
       <div class="subtitle">유니버셜스튜디오 재팬 전문 상담</div>
     </div>
     <div class="chat-messages" id="chatMessages">
@@ -147,7 +147,7 @@
     </div>
   </div>
 
-  <script>
+ <script>
   const API_URL = 'https://usj-chatbot.run.goorm.site';
   let chatId = 'user_' + Date.now();
   let isProcessing = false;
@@ -161,39 +161,33 @@
 
   async function loadQAData() {
     try {
-      // ✅ 안전한 URL 구성
-      let jsonPath = window.location.origin + window.location.pathname;
-      if (!jsonPath.endsWith('/')) {
-        jsonPath = jsonPath.substring(0, jsonPath.lastIndexOf('/') + 1);
-      }
-      const jsonURL = jsonPath + 'usj_qa.json';
-
+      // ✅ 경로는 무조건 상대경로로 고정
+      const jsonURL = './usj_qa.json';
       console.log('✅ JSON 요청 URL:', jsonURL);
 
-      // ✅ fetch 호출
       const response = await fetch(jsonURL);
       console.log('✅ Fetch 상태:', response.status, response.statusText);
-      console.log('✅ Content-Type:', response.headers.get('Content-Type'));
 
       if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
       const text = await response.text();
       console.log('✅ Raw JSON:', text.substring(0, 100) + '...');
-
+      
       usjQAData = JSON.parse(text);
-      usjQuestions = usjQAData.map(item => item.Q);
+      console.log('✅ JSON 파싱:', usjQAData);
 
-      console.log(`✅ JSON 파싱 완료: ${usjQuestions.length}개 질문`);
+      usjQuestions = usjQAData.map(item => item.Q);
+      console.log(`✅ 질문 개수: ${usjQuestions.length}`);
 
       if (usjQuestions.length === 0) {
-        throw new Error('⚠️ JSON은 정상인데 질문 배열이 비어있습니다.');
+        throw new Error('⚠️ JSON 파싱은 됐지만 질문이 없습니다.');
       }
 
       updateQuickQuestions();
       updateControlButtons();
     } catch (error) {
       console.error('❌ Q&A 데이터 로드 실패:', error);
-      showError('질문 데이터를 불러오지 못했습니다. 경로 또는 CORS 문제를 확인하세요.');
+      showError('질문 데이터를 불러오지 못했습니다. 경로 또는 JSON 형식을 다시 확인해주세요.');
     }
   }
 
@@ -208,6 +202,8 @@
 
   function updateQuickQuestions() {
     const newQuestions = getRandomQuestions(2);
+    console.log('✅ 랜덤 선택 질문:', newQuestions);
+
     if (currentQuestions.length > 0) {
       questionHistory = questionHistory.slice(0, historyIndex + 1);
       questionHistory.push([...currentQuestions]);
@@ -216,6 +212,7 @@
       }
       historyIndex = questionHistory.length - 1;
     }
+
     currentQuestions = newQuestions;
     renderQuestions();
     updateControlButtons();
