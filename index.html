@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USJ 챗봇 MRK26</title>
+    <title>USJ 챗봇 MRK27</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -349,7 +349,7 @@
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <h1>🎢 USJ 챗봇 MRK26</h1>
+            <h1>🎢 USJ 챗봇 MRK27</h1>
             <div class="subtitle">유니버셜스튜디오 재팬 전문 상담</div>
         </div>
         
@@ -381,415 +381,222 @@
         </div>
     </div>
 
-    <script>
-        // 기본 설정
-        const API_URL = 'https://usj-chatbot.run.goorm.site';
-        let chatId = 'user_' + Date.now();
-        let isProcessing = false;
-        let shouldAutoScroll = true;
+   <script>
+  // ✅ 기본 설정
+  const API_URL = 'https://usj-chatbot.run.goorm.site';
+  let chatId = 'user_' + Date.now();
+  let isProcessing = false;
+  let shouldAutoScroll = true;
 
-        // 질문 관리 변수들
-        let usjQAData = [];
-        let allQuestions = [];
-        let questionHistory = [];
-        let currentHistoryIndex = -1;
-        let unusedQuestions = []; // 아직 사용하지 않은 질문들
-        let usedQuestions = []; // 이미 사용된 질문들
+  let usjQAData = [];
+  let usjQuestions = [];
+  let currentQuestions = [];
+  let questionHistory = [];
+  let historyIndex = -1;
 
-        // 완벽한 중복 방지 랜덤 질문 생성 함수
-        function getRandomQuestions(count = 2) {
-            if (allQuestions.length === 0) {
-                console.log('❌ 질문 데이터가 없습니다.');
-                return [];
-            }
+  // ✅ Q&A 데이터 로드
+  async function loadQAData() {
+    try {
+      const response = await fetch('./usj_qa.json');
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      usjQAData = await response.json();
+      usjQuestions = usjQAData.map(item => item.Q);
 
-            // 사용하지 않은 질문이 부족하면 새로운 사이클 시작
-            if (unusedQuestions.length < count) {
-                console.log('🔄 모든 질문 사용 완료 - 새로운 사이클 시작');
-                startNewCycle();
-            }
-            
-            console.log(`📊 전체: ${allQuestions.length}개, 미사용: ${unusedQuestions.length}개, 사용완료: ${usedQuestions.length}개`);
+      initQuickQuestions();
 
-            // Fisher-Yates 셔플로 미사용 질문들 섞기
-            const shuffled = [...unusedQuestions];
-            for (let i = shuffled.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-            }
-            
-            // 크립토 API로 추가 랜덤화
-            if (window.crypto && window.crypto.getRandomValues) {
-                const randomArray = new Uint32Array(shuffled.length);
-                window.crypto.getRandomValues(randomArray);
-                shuffled.sort((a, b) => randomArray[shuffled.indexOf(a)] - randomArray[shuffled.indexOf(b)]);
-                console.log('🔐 크립토 API로 추가 랜덤화 적용');
-            }
-            
-            // 요청된 개수만큼 선택
-            const selected = shuffled.slice(0, Math.min(count, shuffled.length));
-            
-            // 선택된 질문들을 미사용 목록에서 제거하고 사용완료 목록에 추가
-            selected.forEach(question => {
-                const index = unusedQuestions.indexOf(question);
-                if (index > -1) {
-                    unusedQuestions.splice(index, 1);
-                    usedQuestions.push(question);
-                }
-            });
-            
-            console.log(`✅ 완벽한 중복방지 ${selected.length}개 질문 선택 완료`);
-            console.log(`📝 선택된 질문: "${selected[0]?.substring(0, 40)}...", "${selected[1]?.substring(0, 40)}..."`);
-            console.log(`📈 진행률: ${usedQuestions.length}/${allQuestions.length} (${Math.round(usedQuestions.length/allQuestions.length*100)}%)`);
-            
-            return selected;
+    } catch (error) {
+      console.error('Q&A 데이터 로드 실패:', error);
+      usjQAData = [
+        { Q: "USJ 입장 시 캐리어를 맡길 수 있나요?", A: "정문 우측 외부에 대형 코인 락커가 있고 ..." },
+        { Q: "USJ에서 당일 입장권도 구매할 수 있나요?", A: "가능합니다. 하지만 당일 판매는 ..." }
+      ];
+      usjQuestions = usjQAData.map(item => item.Q);
+      initQuickQuestions();
+    }
+  }
+
+  // ✅ Quick Questions 초기화
+  function initQuickQuestions() {
+    currentQuestions = getRandomQuestions(2);
+    questionHistory = [ [...currentQuestions] ];
+    historyIndex = 0;
+    renderQuestions();
+    updateControlButtons();
+  }
+
+  // ✅ 랜덤 질문 가져오기 (Fisher-Yates)
+  function getRandomQuestions(count = 2, exclude = []) {
+    const pool = usjQuestions.filter(q => !exclude.includes(q));
+    const shuffled = [...pool];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled.slice(0, count);
+  }
+
+  // ✅ Quick Questions 렌더링
+  function renderQuestions() {
+    const container = document.querySelector('.quick-questions');
+    container.innerHTML = '';
+    currentQuestions.forEach(q => {
+      const btn = document.createElement('button');
+      btn.className = 'quick-btn';
+      btn.textContent = q;
+      btn.onclick = () => sendQuick(q);
+      container.appendChild(btn);
+    });
+  }
+
+  // ✅ 버튼 상태 업데이트
+  function updateControlButtons() {
+    document.getElementById('prevBtn').disabled = historyIndex <= 0;
+    document.getElementById('nextBtn').disabled = false;
+  }
+
+  // ✅ 이전 질문
+  function showPreviousQuestions() {
+    if (historyIndex > 0) {
+      historyIndex--;
+      currentQuestions = [...questionHistory[historyIndex]];
+      renderQuestions();
+      updateControlButtons();
+    }
+  }
+
+  // ✅ 다음 질문 (랜덤 생성 또는 기존)
+  function showNextQuestions() {
+    if (historyIndex < questionHistory.length - 1) {
+      historyIndex++;
+      currentQuestions = [...questionHistory[historyIndex]];
+    } else {
+      const newQ = getRandomQuestions(2, currentQuestions);
+      questionHistory.push([...newQ]);
+      currentQuestions = [...newQ];
+      historyIndex++;
+    }
+    renderQuestions();
+    updateControlButtons();
+  }
+
+  // ✅ 메시지 전송
+  async function sendMessage() {
+    if (isProcessing) return;
+
+    const input = document.getElementById('messageInput');
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    isProcessing = true;
+    shouldAutoScroll = true;
+    input.value = '';
+    document.getElementById('sendBtn').textContent = '전송중...';
+
+    addMessage(msg, 'user');
+
+    const answer = usjQAData.find(item => item.Q === msg)?.A;
+    if (answer) {
+      addMessage(`${answer}\n\n※ 이 답변은 미리 준비된 내용입니다.`, 'bot');
+      updateQuickQuestions();
+      endProcessing();
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg, chat_id: chatId })
+      });
+      if (!res.ok) throw new Error('서버 오류');
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let botMsg = addMessage('', 'bot');
+      let full = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+        for (const line of lines) {
+          if (line.startsWith('data: ') && !line.includes('[DONE]')) {
+            const data = JSON.parse(line.slice(6));
+            const content = data.choices?.[0]?.delta?.content || '';
+            full += content;
+            botMsg.querySelector('.message-content').innerHTML = full.replace(/\n/g, '<br>');
+            if (shouldAutoScroll) scrollToBottom();
+          }
         }
+      }
+      updateQuickQuestions();
+    } catch (e) {
+      showError(e.message);
+    } finally {
+      endProcessing();
+    }
+  }
 
-        // 새로운 사이클 시작 (모든 질문을 다시 사용 가능하게)
-        function startNewCycle() {
-            unusedQuestions = [...allQuestions];
-            usedQuestions = [];
-            console.log(`🆕 새로운 사이클 시작 - ${unusedQuestions.length}개 질문 준비 완료`);
-        }
+  // ✅ 빠른 질문 전송
+  function sendQuick(q) {
+    document.getElementById('messageInput').value = q;
+    sendMessage();
+  }
 
-        // 질문 풀 초기화
-        function initializeQuestionPool() {
-            if (allQuestions.length > 0) {
-                startNewCycle();
-                console.log(`🎯 질문 풀 초기화 완료 - 총 ${allQuestions.length}개 질문`);
-            }
-        }
+  // ✅ 메시지 추가
+  function addMessage(content, type) {
+    const wrap = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = `message ${type}`;
+    div.innerHTML = `<div class="message-content">${content.replace(/\n/g, '<br>')}</div>`;
+    wrap.appendChild(div);
+    scrollToBottom();
+    return div;
+  }
 
-        // 새로운 랜덤 질문 표시
-        function showNewRandomQuestions() {
-            const newQuestions = getRandomQuestions(2);
-            
-            if (newQuestions.length === 0) {
-                console.log('❌ 새로운 질문을 생성할 수 없습니다.');
-                return;
-            }
+  // ✅ 자동 스크롤
+  function scrollToBottom() {
+    const wrap = document.getElementById('chatMessages');
+    wrap.scrollTop = wrap.scrollHeight;
+  }
 
-            // 현재 질문을 히스토리에 추가 (새로운 질문일 때만)
-            if (currentHistoryIndex < questionHistory.length - 1) {
-                // 현재 위치 이후의 히스토리 제거
-                questionHistory = questionHistory.slice(0, currentHistoryIndex + 1);
-            }
-            
-            questionHistory.push(newQuestions);
-            currentHistoryIndex = questionHistory.length - 1;
-            
-            renderQuestions(newQuestions);
-            updateControlButtons();
-            
-            console.log(`✅ 새 질문 표시 완료. 히스토리: ${questionHistory.length}개`);
-        }
+  // ✅ 오류 메시지
+  function showError(msg) {
+    const wrap = document.getElementById('chatMessages');
+    const div = document.createElement('div');
+    div.className = 'error-message';
+    div.textContent = '❗ ' + msg;
+    wrap.appendChild(div);
+    scrollToBottom();
+  }
 
-        // 이전 질문 표시
-        function showPreviousQuestions() {
-            if (currentHistoryIndex > 0) {
-                currentHistoryIndex--;
-                const prevQuestions = questionHistory[currentHistoryIndex];
-                renderQuestions(prevQuestions);
-                updateControlButtons();
-                console.log(`⬅️ 이전 질문 표시 (인덱스: ${currentHistoryIndex})`);
-            }
-        }
+  // ✅ 처리 종료
+  function endProcessing() {
+    isProcessing = false;
+    document.getElementById('sendBtn').textContent = '전송';
+  }
 
-        // 다음 질문 표시
-        function showNextQuestions() {
-            if (currentHistoryIndex < questionHistory.length - 1) {
-                // 히스토리에 다음 질문이 있으면 표시
-                currentHistoryIndex++;
-                const nextQuestions = questionHistory[currentHistoryIndex];
-                renderQuestions(nextQuestions);
-                updateControlButtons();
-                console.log(`➡️ 다음 질문 표시 (인덱스: ${currentHistoryIndex})`);
-            } else {
-                // 히스토리 끝이면 새로운 랜덤 질문 생성
-                showNewRandomQuestions();
-            }
-        }
+  // ✅ 엔터키
+  function handleEnter(e) {
+    if (e.key === 'Enter' && !isProcessing) sendMessage();
+  }
 
-        // 질문 렌더링
-        function renderQuestions(questions) {
-            const container = document.querySelector('.quick-questions');
-            if (!container) return;
-            
-            container.innerHTML = '';
-            
-            questions.forEach(question => {
-                const button = document.createElement('button');
-                button.className = 'quick-btn';
-                button.textContent = question;
-                button.onclick = () => sendQuick(question);
-                container.appendChild(button);
-            });
-            
-            console.log('🎨 질문 버튼 렌더링 완료:', questions);
-        }
+  // ✅ 스크롤 상태 감지
+  function setupScrollListener() {
+    const wrap = document.getElementById('chatMessages');
+    wrap.addEventListener('scroll', () => {
+      shouldAutoScroll = wrap.scrollHeight - wrap.scrollTop <= wrap.clientHeight + 50;
+    });
+  }
 
-        // 컨트롤 버튼 상태 업데이트
-        function updateControlButtons() {
-            const prevBtn = document.getElementById('prevBtn');
-            const nextBtn = document.getElementById('nextBtn');
-            
-            if (prevBtn) {
-                prevBtn.disabled = currentHistoryIndex <= 0;
-            }
-            
-            if (nextBtn) {
-                nextBtn.disabled = false; // 항상 새 질문 생성 가능하므로 활성화
-            }
-            
-            console.log(`🎛️ 버튼 상태 업데이트 - 이전: ${prevBtn?.disabled ? '비활성' : '활성'}, 다음: 활성`);
-        }
+  // ✅ 초기화
+  document.addEventListener('DOMContentLoaded', () => {
+    setupScrollListener();
+    loadQAData();
+  });
+</script>
 
-        // JSON 파일 로드
-        async function loadQAData() {
-            console.log('🔄 Q&A 데이터 로드 시작...');
-            const response = await fetch('./usj_qa.json');
-            
-            usjQAData = await response.json();
-            allQuestions = usjQAData.map(item => item.Q);
-            
-            console.log(`✅ ${allQuestions.length}개 질문 로드 완료`);
-            
-            // 질문 풀 초기화
-            initializeQuestionPool();
-            
-            // 첫 번째 랜덤 질문 세트 생성
-            showNewRandomQuestions();
-        }
-
-        // Q&A 데이터에서 답변 찾기
-        function findAnswerFromQA(question) {
-            const qaItem = usjQAData.find(item => item.Q === question);
-            return qaItem ? qaItem.A : null;
-        }
-
-        // 스크롤 관련 함수들
-        function scrollToBottom() {
-            const messages = document.getElementById('chatMessages');
-            if (messages) {
-                messages.scrollTop = messages.scrollHeight;
-            }
-        }
-
-        function setupScrollListener() {
-            const messages = document.getElementById('chatMessages');
-            if (messages) {
-                messages.addEventListener('scroll', () => {
-                    const isAtBottom = messages.scrollHeight - messages.scrollTop <= messages.clientHeight + 50;
-                    shouldAutoScroll = isAtBottom;
-                });
-            }
-        }
-
-        // 디바이스 감지
-        function isMobile() {
-            return window.innerWidth <= 768 || /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        }
-
-        // 페이지 로드 시 초기화
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 페이지 로드 완료 - 초기화 시작');
-            
-            setupScrollListener();
-            loadQAData();
-            
-            if (isMobile()) {
-                console.log('📱 모바일 디바이스 감지');
-            } else {
-                console.log('💻 데스크톱 디바이스 감지');
-            }
-        });
-
-        // 빠른 질문 전송
-        function sendQuick(question) {
-            console.log(`🔘 빠른 질문 클릭: ${question}`);
-            document.getElementById('messageInput').value = question;
-            sendMessage(true);
-        }
-
-        // 엔터키 처리
-        function handleEnter(event) {
-            if (event.key === 'Enter' && !isProcessing) {
-                sendMessage();
-            }
-        }
-
-        // 메시지 전송
-        async function sendMessage(isQuickQuestion = false) {
-            if (isProcessing) return;
-            
-            const input = document.getElementById('messageInput');
-            const message = input.value.trim();
-            if (!message) return;
-            
-            console.log(`💬 메시지 전송: ${message}`);
-            
-            isProcessing = true;
-            shouldAutoScroll = true;
-            input.value = '';
-            document.getElementById('sendBtn').textContent = '전송중...';
-            
-            addMessage(message, 'user');
-            
-            if (isMobile()) {
-                input.blur();
-            }
-
-            try {
-                // JSON 데이터에서 답변 찾기
-                const answer = findAnswerFromQA(message);
-                
-                if (answer) {
-                    console.log('✅ 준비된 답변 발견');
-                    
-                    let displayText = answer;
-                    if (displayText.includes('※ 이 답변은 AI가 안내한 내용으로')) {
-                        displayText = displayText.replace(
-                            '※ 이 답변은 AI가 안내한 내용으로', 
-                            '\n\n※ 이 답변은 AI가 안내한 내용으로'
-                        );
-                    } else {
-                        displayText += '\n\n※ 이 답변은 미리 준비된 내용입니다. 추가 질문이 있으시면 언제든 말씀해주세요!';
-                    }
-                    
-                    const botMessage = addMessage('', 'bot');
-                    botMessage.querySelector('.message-content').innerHTML = displayText.replace(/\n/g, '<br>');
-                    
-                    // 답변 후 새로운 완전 랜덤 질문 표시
-                    showNewRandomQuestions();
-                } else {
-                    console.log('⚠️ 준비된 답변 없음 - API 호출 시도');
-                    
-                    // API 호출 (기존 코드)
-                    const response = await fetch(`${API_URL}/chat`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message, chat_id: chatId })
-                    });
-
-                    if (!response.ok) throw new Error('서버 오류');
-
-                    const reader = response.body.getReader();
-                    const decoder = new TextDecoder();
-                    let botMessage = addMessage('', 'bot');
-                    let fullResponse = '';
-
-                    while (true) {
-                        const { done, value } = await reader.read();
-                        if (done) break;
-
-                        const chunk = decoder.decode(value);
-                        const lines = chunk.split('\n');
-
-                        for (const line of lines) {
-                            if (line.startsWith('data: ') && !line.includes('[DONE]')) {
-                                try {
-                                    const data = JSON.parse(line.slice(6));
-                                    const content = data.choices?.[0]?.delta?.content || '';
-                                    if (content) {
-                                        fullResponse += content;
-                                        
-                                        let displayText = fullResponse;
-                                        if (displayText.includes('※ 이 답변은 AI가 안내한 내용으로')) {
-                                            displayText = displayText.replace(
-                                                '※ 이 답변은 AI가 안내한 내용으로', 
-                                                '\n\n※ 이 답변은 AI가 안내한 내용으로'
-                                            );
-                                        }
-                                        
-                                        botMessage.querySelector('.message-content').innerHTML = displayText.replace(/\n/g, '<br>');
-                                        
-                                        if (shouldAutoScroll) {
-                                            scrollToBottom();
-                                        }
-                                    }
-                                } catch (e) {
-                                    console.error('응답 파싱 오류:', e);
-                                }
-                            }
-                        }
-                    }
-                    
-                    // API 응답 후에도 새로운 완전 랜덤 질문 표시
-                    showNewRandomQuestions();
-                }
-
-            } catch (error) {
-                console.error('❌ 메시지 전송 오류:', error);
-                showError('연결 오류: ' + error.message);
-            } finally {
-                isProcessing = false;
-                document.getElementById('sendBtn').textContent = '전송';
-                
-                if (shouldAutoScroll) {
-                    setTimeout(() => scrollToBottom(), 100);
-                }
-            }
-        }
-
-        // 메시지 추가
-        function addMessage(content, type) {
-            const messages = document.getElementById('chatMessages');
-            const div = document.createElement('div');
-            div.className = `message ${type}`;
-            div.innerHTML = `<div class="message-content">${content}</div>`;
-            messages.appendChild(div);
-            
-            if (shouldAutoScroll) {
-                scrollToBottom();
-            }
-            
-            return div;
-        }
-
-        // 오류 표시
-        function showError(message) {
-            const messages = document.getElementById('chatMessages');
-            const div = document.createElement('div');
-            div.className = 'error-message';
-            div.textContent = message;
-            messages.appendChild(div);
-            
-            if (shouldAutoScroll) {
-                scrollToBottom();
-            }
-        }
-
-        // 화면 크기 변경 감지
-        window.addEventListener('resize', function() {
-            if (shouldAutoScroll) {
-                setTimeout(() => scrollToBottom(), 100);
-            }
-        });
-
-        // 모바일 키보드 대응
-        if (isMobile()) {
-            let initialViewportHeight = window.innerHeight;
-            
-            window.addEventListener('resize', function() {
-                const currentHeight = window.innerHeight;
-                const heightDifference = initialViewportHeight - currentHeight;
-                
-                if (heightDifference > 150) {
-                    setTimeout(() => {
-                        if (shouldAutoScroll) {
-                            scrollToBottom();
-                        }
-                    }, 300);
-                }
-                else if (heightDifference < 50) {
-                    setTimeout(() => {
-                        if (shouldAutoScroll) {
-                            scrollToBottom();
-                        }
-                    }, 100);
-                }
-            });
-        }
-    </script>
 </body>
 </html>
