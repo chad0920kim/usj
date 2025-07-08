@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USJ 챗봇 MRK20</title>
+    <title>USJ 챗봇 MRK21</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -349,7 +349,7 @@
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <h1>🎢 USJ 챗봇 MRK20</h1>
+            <h1>🎢 USJ 챗봇 MRK21</h1>
             <div class="subtitle">유니버셜스튜디오 재팬 전문 상담</div>
         </div>
         
@@ -399,6 +399,8 @@
         let currentQuestions = [];
         let questionHistory = [];
         let historyIndex = -1;
+        let recentlyShownQuestions = []; // 최근에 보여진 질문들 추적
+        let questionPool = []; // 섞인 질문 풀
         
         // JSON 파일에서 Q&A 데이터 로드
         async function loadQAData() {
@@ -414,6 +416,9 @@
                 usjQuestions = usjQAData.map(item => item.Q);
                 
                 console.log(`${usjQuestions.length}개 질문 로드됨`);
+                
+                // 질문 풀 초기화
+                initializeQuestionPool();
                 
                 // 초기 질문 설정
                 updateQuickQuestions();
@@ -443,6 +448,10 @@
                 usjQuestions = usjQAData.map(item => item.Q);
                 
                 console.log(`기본 질문 ${usjQuestions.length}개로 폴백`);
+                
+                // 질문 풀 초기화
+                initializeQuestionPool();
+                
                 updateQuickQuestions();
                 updateControlButtons();
             }
@@ -517,23 +526,81 @@
         // ✅ Fisher-Yates 셔플 기반 랜덤 질문 선택 함수
         function getRandomQuestions(count = 2, excludeQuestions = []) {
             if (usjQuestions.length === 0) return [];
+            
+            // 사용 가능한 질문 필터링
             const availableQuestions = usjQuestions.filter(q => !excludeQuestions.includes(q));
-            const shuffled = [...availableQuestions];
+            
+            // 최근에 보여진 질문들도 제외 (전체 질문의 40% 이하만 제외)
+            const maxRecentExclusions = Math.floor(usjQuestions.length * 0.4);
+            const recentToExclude = recentlyShownQuestions.slice(-maxRecentExclusions);
+            const finalAvailable = availableQuestions.filter(q => !recentToExclude.includes(q));
+            
+            // 사용 가능한 질문이 충분하지 않으면 최근 제외 목록 초기화
+            if (finalAvailable.length < count) {
+                recentlyShownQuestions = [];
+                const resetAvailable = availableQuestions;
+                return shuffleArray([...resetAvailable]).slice(0, count);
+            }
+            
+            return shuffleArray([...finalAvailable]).slice(0, count);
+        }
+        
+        // Fisher-Yates 셔플 함수
+        function shuffleArray(array) {
+            const shuffled = [...array];
             for (let i = shuffled.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
             }
-            return shuffled.slice(0, count);
+            return shuffled;
+        }
+        
+        // 질문 풀 초기화 및 재생성
+        function initializeQuestionPool() {
+            questionPool = shuffleArray([...usjQuestions]);
+        }
+        
+        // 풀에서 질문 가져오기
+        function getQuestionsFromPool(count = 2, excludeQuestions = []) {
+            const available = questionPool.filter(q => !excludeQuestions.includes(q));
+            
+            // 풀이 부족하면 다시 섞어서 초기화
+            if (available.length < count) {
+                initializeQuestionPool();
+                return questionPool.filter(q => !excludeQuestions.includes(q)).slice(0, count);
+            }
+            
+            // 선택된 질문들을 풀에서 제거
+            const selectedQuestions = available.slice(0, count);
+            selectedQuestions.forEach(q => {
+                const index = questionPool.indexOf(q);
+                if (index > -1) questionPool.splice(index, 1);
+            });
+            
+            return selectedQuestions;
         }
         
         // ✅ 완전 랜덤으로만 Quick Questions 업데이트
         function updateQuickQuestions() {
-            const newQuestions = getRandomQuestions(2, currentQuestions);
+            // 질문 풀 방식 사용
+            const newQuestions = getQuestionsFromPool(2, currentQuestions);
+            
+            // 히스토리에 현재 질문 저장
             if (currentQuestions.length > 0 && JSON.stringify(currentQuestions) !== JSON.stringify(newQuestions)) {
                 questionHistory = questionHistory.slice(0, historyIndex + 1);
                 questionHistory.push([...currentQuestions]);
                 historyIndex = questionHistory.length - 1;
             }
+            
+            // 최근 표시된 질문들에 추가
+            recentlyShownQuestions.push(...newQuestions);
+            
+            // 최근 목록이 너무 길어지면 앞부분 제거
+            const maxRecentSize = Math.floor(usjQuestions.length * 0.6);
+            if (recentlyShownQuestions.length > maxRecentSize) {
+                recentlyShownQuestions = recentlyShownQuestions.slice(-maxRecentSize);
+            }
+            
             currentQuestions = newQuestions;
             renderQuestions();
             updateControlButtons();
@@ -567,13 +634,26 @@
         
         // ✅ showNextQuestions() 도 랜덤으로
         function showNextQuestions() {
-            const newQuestions = getRandomQuestions(2, currentQuestions);
+            // 질문 풀에서 새로운 질문 가져오기
+            const newQuestions = getQuestionsFromPool(2, currentQuestions);
+            
             if (newQuestions.length > 0) {
+                // 히스토리에 현재 질문 저장
                 if (currentQuestions.length > 0) {
                     questionHistory = questionHistory.slice(0, historyIndex + 1);
                     questionHistory.push([...currentQuestions]);
                     historyIndex = questionHistory.length - 1;
                 }
+                
+                // 최근 표시된 질문들에 추가
+                recentlyShownQuestions.push(...newQuestions);
+                
+                // 최근 목록 크기 제한
+                const maxRecentSize = Math.floor(usjQuestions.length * 0.6);
+                if (recentlyShownQuestions.length > maxRecentSize) {
+                    recentlyShownQuestions = recentlyShownQuestions.slice(-maxRecentSize);
+                }
+                
                 currentQuestions = newQuestions;
                 renderQuestions();
                 updateControlButtons();
