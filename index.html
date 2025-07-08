@@ -1,387 +1,153 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USJ 챗봇 MRK20-4</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 0;
-            padding: 0;
-        }
-        
-        /* PC 버전 기본 스타일 */
-        .chat-container {
-            width: 90%;
-            max-width: 800px;
-            height: 80vh;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        
-        .chat-header {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
-        
-        .chat-header h1 {
-            font-size: 1.5rem;
-            margin-bottom: 5px;
-        }
-        
-        .chat-header .subtitle {
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }
-        
-        .chat-messages {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            background: #f8f9fa;
-        }
-        
-        .message {
-            margin-bottom: 15px;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .message.user { align-items: flex-end; }
-        .message.bot { align-items: flex-start; }
-        
-        .message-content {
-            max-width: 70%;
-            padding: 12px 16px;
-            border-radius: 18px;
-            word-wrap: break-word;
-            line-height: 1.4;
-        }
-        
-        .message.user .message-content {
-            background: #007bff;
-            color: white;
-        }
-        
-        .message.bot .message-content {
-            background: white;
-            color: #333;
-            border: 1px solid #e9ecef;
-        }
-        
-        .chat-input-container {
-            padding: 20px;
-            background: white;
-            border-top: 1px solid #e9ecef;
-        }
-        
-        .chat-input-row {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .chat-input {
-            flex: 1;
-            padding: 12px 16px;
-            border: 2px solid #e9ecef;
-            border-radius: 25px;
-            font-size: 1rem;
-            outline: none;
-        }
-        
-        .send-btn {
-            padding: 12px 24px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 1rem;
-        }
-        
-        .send-btn:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-        }
-        
-        .quick-questions {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-        }
-        
-        .question-controls {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .control-btn {
-            padding: 6px 12px;
-            background: #e9ecef;
-            border: 1px solid #dee2e6;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            min-width: 50px;
-        }
-        
-        .control-btn:hover {
-            background: #d4d4d4;
-        }
-        
-        .control-btn:disabled {
-            background: #f8f9fa;
-            color: #6c757d;
-            cursor: not-allowed;
-        }
-        
-        .quick-btn {
-            padding: 8px 12px;
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            white-space: nowrap;
-            min-width: fit-content;
-            transition: background-color 0.2s;
-        }
-        
-        .quick-btn:hover {
-            background: #e9ecef;
-        }
-        
-        .error-message {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 10px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-        }
-        
-        /* 모바일 전용 스타일 */
-        @media screen and (max-width: 768px) {
-            body {
-                padding: 0;
-                align-items: stretch;
-                overflow: hidden;
-                margin: 0;
-            }
-            
-            .chat-container {
-                width: 100vw;
-                height: 100vh;
-                border-radius: 0;
-                max-width: none;
-                box-shadow: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-            }
-            
-            .chat-header {
-                padding: 15px 20px;
-                position: relative;
-                flex-shrink: 0;
-            }
-            
-            .chat-header h1 {
-                font-size: 1.3rem;
-            }
-            
-            .chat-header .subtitle {
-                font-size: 0.8rem;
-            }
-            
-            .chat-messages {
-                flex: 1;
-                padding: 15px;
-                overflow-y: auto;
-                overflow-x: hidden;
-                -webkit-overflow-scrolling: touch;
-                scroll-behavior: smooth;
-                overscroll-behavior: contain;
-            }
-            
-            .message-content {
-                max-width: 85%;
-                padding: 10px 14px;
-                font-size: 0.9rem;
-            }
-            
-            .chat-input-container {
-                padding: 15px;
-                flex-shrink: 0;
-                position: relative;
-                background: white;
-                border-top: 2px solid #e9ecef;
-                padding-bottom: max(15px, env(safe-area-inset-bottom));
-            }
-            
-            .quick-questions {
-                gap: 6px;
-                margin-bottom: 8px;
-            }
-            
-            .question-controls {
-                gap: 8px;
-                margin-bottom: 12px;
-            }
-            
-            .control-btn {
-                padding: 8px 10px;
-                font-size: 0.7rem;
-                min-width: 45px;
-            }
-            
-            .quick-btn {
-                padding: 10px 12px;
-                font-size: 0.75rem;
-                border-radius: 20px;
-                white-space: normal;
-                text-align: center;
-                min-height: 40px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                flex: 1;
-                min-width: 0;
-            }
-            
-            .chat-input {
-                padding: 14px 16px;
-                font-size: 16px;
-                border-radius: 20px;
-            }
-            
-            .send-btn {
-                padding: 14px 20px;
-                font-size: 0.9rem;
-                border-radius: 20px;
-                min-width: 60px;
-            }
-            
-            .chat-input-row {
-                gap: 8px;
-            }
-        }
-        
-        /* 아주 작은 모바일 (iPhone SE 등) */
-        @media screen and (max-width: 375px) {
-            .chat-header {
-                padding: 12px 15px;
-            }
-            
-            .chat-header h1 {
-                font-size: 1.2rem;
-            }
-            
-            .chat-messages {
-                padding: 12px;
-            }
-            
-            .chat-input-container {
-                padding: 12px;
-            }
-            
-            .quick-btn {
-                font-size: 0.7rem;
-                padding: 8px 10px;
-                min-height: 36px;
-            }
-            
-            .send-btn {
-                padding: 12px 16px;
-                min-width: 55px;
-            }
-        }
-        
-        /* 태블릿 */
-        @media screen and (min-width: 769px) and (max-width: 1024px) {
-            .chat-container {
-                width: 85%;
-                max-width: 700px;
-            }
-            
-            .quick-btn {
-                font-size: 0.85rem;
-            }
-        }
-        
-        /* 스크롤바 스타일링 */
-        .chat-messages::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .chat-messages::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-        
-        .chat-messages::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 10px;
-        }
-        
-        .chat-messages::-webkit-scrollbar-thumb:hover {
-            background: #a8a8a8;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>USJ 챗봇 MRK20-5</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+    }
+    .chat-container {
+      width: 90%;
+      max-width: 800px;
+      height: 80vh;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .chat-header {
+      background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    .chat-header h1 { font-size: 1.5rem; margin-bottom: 5px; }
+    .chat-header .subtitle { font-size: 0.9rem; opacity: 0.9; }
+    .chat-messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      background: #f8f9fa;
+    }
+    .message { margin-bottom: 15px; display: flex; flex-direction: column; }
+    .message.user { align-items: flex-end; }
+    .message.bot { align-items: flex-start; }
+    .message-content {
+      max-width: 70%;
+      padding: 12px 16px;
+      border-radius: 18px;
+      word-wrap: break-word;
+      line-height: 1.4;
+    }
+    .message.user .message-content {
+      background: #007bff;
+      color: white;
+    }
+    .message.bot .message-content {
+      background: white;
+      color: #333;
+      border: 1px solid #e9ecef;
+    }
+    .chat-input-container {
+      padding: 20px;
+      background: white;
+      border-top: 1px solid #e9ecef;
+    }
+    .chat-input-row { display: flex; gap: 10px; }
+    .chat-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid #e9ecef;
+      border-radius: 25px;
+      font-size: 1rem;
+      outline: none;
+    }
+    .send-btn {
+      padding: 12px 24px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+    .quick-questions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .question-controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .control-btn {
+      padding: 6px 12px;
+      background: #e9ecef;
+      border: 1px solid #dee2e6;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+    .quick-btn {
+      padding: 8px 12px;
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 15px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .error-message {
+      background: #f8d7da;
+      color: #721c24;
+      padding: 10px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+  </style>
 </head>
 <body>
-    <div class="chat-container">
-        <div class="chat-header">
-            <h1>🎢 USJ 챗봇 MRK20-4</h1>
-            <div class="subtitle">유니버셜스튜디오 재팬 전문 상담</div>
-        </div>
-        
-        <div class="chat-messages" id="chatMessages">
-            <div class="message bot">
-                <div class="message-content">
-                    안녕하세요! USJ 전문 상담 챗봇입니다.<br>
-                    티켓 예약, 익스프레스패스, 어트랙션 정보 등을 도움드려요!
-                </div>
-            </div>
-        </div>
-        
-        <div class="chat-input-container">
-            <div class="quick-questions">
-                <!-- 질문들이 JavaScript로 동적 생성됩니다 -->
-            </div>
-            
-            <div class="question-controls">
-                <button class="control-btn" id="prevBtn" onclick="showPreviousQuestions()">이전</button>
-                <button class="control-btn" id="nextBtn" onclick="showNextQuestions()">다음</button>
-            </div>
-            
-            <div class="chat-input-row">
-                <input type="text" class="chat-input" id="messageInput" 
-                       placeholder="USJ 관련 질문을 입력하세요..." 
-                       onkeypress="handleEnter(event)">
-                <button class="send-btn" id="sendBtn" onclick="sendMessage()">전송</button>
-            </div>
-        </div>
+  <div class="chat-container">
+    <div class="chat-header">
+      <h1>🎢 USJ 챗봇 MRK20-5</h1>
+      <div class="subtitle">유니버셜스튜디오 재팬 전문 상담</div>
     </div>
+    <div class="chat-messages" id="chatMessages">
+      <div class="message bot">
+        <div class="message-content">
+          안녕하세요! USJ 전문 상담 챗봇입니다.<br>
+          티켓 예약, 익스프레스패스, 어트랙션 정보 등을 도움드려요!
+        </div>
+      </div>
+    </div>
+    <div class="chat-input-container">
+      <div class="quick-questions"></div>
+      <div class="question-controls">
+        <button class="control-btn" id="prevBtn" onclick="showPreviousQuestions()">이전</button>
+        <button class="control-btn" id="nextBtn" onclick="showNextQuestions()">다음</button>
+      </div>
+      <div class="chat-input-row">
+        <input type="text" class="chat-input" id="messageInput"
+               placeholder="USJ 관련 질문을 입력하세요..."
+               onkeypress="handleEnter(event)">
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">전송</button>
+      </div>
+    </div>
+  </div>
 
-   <script>
+  <script>
     const API_URL = 'https://usj-chatbot.run.goorm.site';
     let chatId = 'user_' + Date.now();
     let isProcessing = false;
@@ -389,199 +155,184 @@
 
     let usjQAData = [];
     let usjQuestions = [];
-    let shuffledQuestions = [];
-    let currentQuestionIndex = 0;
     let currentQuestions = [];
     let questionHistory = [];
     let historyIndex = -1;
 
     async function loadQAData() {
-        try {
-            const response = await fetch('./usj_qa.json');
-            if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            usjQAData = await response.json();
-            usjQuestions = usjQAData.map(item => item.Q);
+      try {
+        const response = await fetch('./usj_qa.json');
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        usjQAData = await response.json();
+        usjQuestions = usjQAData.map(item => item.Q);
 
-            shuffledQuestions = [...usjQuestions];
-            shuffleArray(shuffledQuestions);
+        console.log('✅ JSON 로드 완료:', usjQuestions.length);
 
-            updateQuickQuestions();
-            updateControlButtons();
-        } catch (error) {
-            console.error('Q&A 데이터 로드 실패:', error);
-            showError('질문 데이터를 불러오지 못했습니다.');
-        }
+        updateQuickQuestions();
+        updateControlButtons();
+      } catch (error) {
+        console.error('Q&A 데이터 로드 실패:', error);
+        showError('질문 데이터를 불러오지 못했습니다.');
+      }
     }
 
-    function shuffleArray(array) {
-        for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
-        }
-    }
-
-    function getNextSequentialQuestions(count = 2) {
-        const questions = [];
-        const total = shuffledQuestions.length;
-        for (let i = 0; i < count; i++) {
-            if (currentQuestionIndex >= total) {
-                shuffleArray(shuffledQuestions);
-                currentQuestionIndex = 0;
-            }
-            questions.push(shuffledQuestions[currentQuestionIndex]);
-            currentQuestionIndex++;
-        }
-        return questions;
+    function getRandomQuestions(count = 2) {
+      const shuffled = [...usjQuestions];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled.slice(0, count);
     }
 
     function updateQuickQuestions() {
-        const newQuestions = getNextSequentialQuestions(2);
-
-        if (currentQuestions.length > 0) {
-            questionHistory = questionHistory.slice(0, historyIndex + 1);
-            questionHistory.push([...currentQuestions]);
-            if (questionHistory.length > 20) {
-                questionHistory = questionHistory.slice(-20);
-            }
-            historyIndex = questionHistory.length - 1;
+      const newQuestions = getRandomQuestions(2);
+      if (currentQuestions.length > 0) {
+        questionHistory = questionHistory.slice(0, historyIndex + 1);
+        questionHistory.push([...currentQuestions]);
+        if (questionHistory.length > 20) {
+          questionHistory = questionHistory.slice(-20);
         }
-
-        currentQuestions = newQuestions;
-        renderQuestions();
-        updateControlButtons();
+        historyIndex = questionHistory.length - 1;
+      }
+      currentQuestions = newQuestions;
+      renderQuestions();
+      updateControlButtons();
     }
 
     function renderQuestions() {
-        const container = document.querySelector('.quick-questions');
-        container.innerHTML = '';
-        currentQuestions.forEach(q => {
-            const btn = document.createElement('button');
-            btn.className = 'quick-btn';
-            btn.textContent = q;
-            btn.onclick = () => sendQuick(q);
-            container.appendChild(btn);
-        });
+      const container = document.querySelector('.quick-questions');
+      container.innerHTML = '';
+      currentQuestions.forEach(q => {
+        const btn = document.createElement('button');
+        btn.className = 'quick-btn';
+        btn.textContent = q;
+        btn.onclick = () => sendQuick(q);
+        container.appendChild(btn);
+      });
     }
 
     function showPreviousQuestions() {
-        if (historyIndex > 0) {
-            historyIndex--;
-            currentQuestions = [...questionHistory[historyIndex]];
-            renderQuestions();
-            updateControlButtons();
-        }
+      if (historyIndex > 0) {
+        historyIndex--;
+        currentQuestions = [...questionHistory[historyIndex]];
+        renderQuestions();
+        updateControlButtons();
+      }
     }
 
     function showNextQuestions() {
-        updateQuickQuestions();
+      updateQuickQuestions();
     }
 
     function updateControlButtons() {
-        const prevBtn = document.getElementById('prevBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        prevBtn.disabled = historyIndex <= 0;
-        nextBtn.disabled = false;
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      prevBtn.disabled = historyIndex <= 0;
+      nextBtn.disabled = false;
     }
 
     function findAnswerFromQA(question) {
-        const item = usjQAData.find(item => item.Q === question);
-        return item ? item.A : null;
+      const item = usjQAData.find(item => item.Q === question);
+      return item ? item.A : null;
     }
 
     function sendQuick(question) {
-        document.getElementById('messageInput').value = question;
-        sendMessage();
+      document.getElementById('messageInput').value = question;
+      sendMessage();
     }
 
     async function sendMessage() {
-        if (isProcessing) return;
+      if (isProcessing) return;
 
-        const input = document.getElementById('messageInput');
-        const message = input.value.trim();
-        if (!message) return;
+      const input = document.getElementById('messageInput');
+      const message = input.value.trim();
+      if (!message) return;
 
-        isProcessing = true;
-        shouldAutoScroll = true;
-        input.value = '';
-        document.getElementById('sendBtn').textContent = '전송중...';
+      isProcessing = true;
+      shouldAutoScroll = true;
+      input.value = '';
+      document.getElementById('sendBtn').textContent = '전송중...';
 
-        addMessage(message, 'user');
+      addMessage(message, 'user');
 
-        try {
-            const answer = findAnswerFromQA(message);
-            if (answer) {
-                const botMessage = addMessage('', 'bot');
-                botMessage.querySelector('.message-content').innerHTML = answer.replace(/\n/g, '<br>') + '<br><br>※ 미리 준비된 답변입니다.';
-            } else {
-                const response = await fetch(`${API_URL}/chat`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message, chat_id: chatId })
-                });
+      try {
+        const answer = findAnswerFromQA(message);
+        if (answer) {
+          const botMessage = addMessage('', 'bot');
+          botMessage.querySelector('.message-content').innerHTML = answer.replace(/\n/g, '<br>') + '<br><br>※ 미리 준비된 답변입니다.';
+        } else {
+          const response = await fetch(`${API_URL}/chat`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message, chat_id: chatId })
+          });
+          if (!response.ok) throw new Error('서버 오류');
 
-                if (!response.ok) throw new Error('서버 오류');
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let botMessage = addMessage('', 'bot');
+          let fullResponse = '';
 
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
-                let botMessage = addMessage('', 'bot');
-                let fullResponse = '';
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
 
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-
-                    const chunk = decoder.decode(value);
-                    const lines = chunk.split('\n');
-                    for (const line of lines) {
-                        if (line.startsWith('data: ') && !line.includes('[DONE]')) {
-                            const data = JSON.parse(line.slice(6));
-                            const content = data.choices?.[0]?.delta?.content || '';
-                            if (content) {
-                                fullResponse += content;
-                                botMessage.querySelector('.message-content').innerHTML = fullResponse.replace(/\n/g, '<br>');
-                                if (shouldAutoScroll) scrollToBottom();
-                            }
-                        }
-                    }
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n');
+            for (const line of lines) {
+              if (line.startsWith('data: ') && !line.includes('[DONE]')) {
+                const data = JSON.parse(line.slice(6));
+                const content = data.choices?.[0]?.delta?.content || '';
+                if (content) {
+                  fullResponse += content;
+                  botMessage.querySelector('.message-content').innerHTML = fullResponse.replace(/\n/g, '<br>');
+                  if (shouldAutoScroll) scrollToBottom();
                 }
+              }
             }
-            updateQuickQuestions();
-        } catch (err) {
-            showError('연결 오류: ' + err.message);
-        } finally {
-            isProcessing = false;
-            document.getElementById('sendBtn').textContent = '전송';
+          }
         }
+        updateQuickQuestions();
+      } catch (err) {
+        showError('연결 오류: ' + err.message);
+      } finally {
+        isProcessing = false;
+        document.getElementById('sendBtn').textContent = '전송';
+      }
     }
 
     function addMessage(content, type) {
-        const messages = document.getElementById('chatMessages');
-        const div = document.createElement('div');
-        div.className = `message ${type}`;
-        div.innerHTML = `<div class="message-content">${content}</div>`;
-        messages.appendChild(div);
-        if (shouldAutoScroll) scrollToBottom();
-        return div;
+      const messages = document.getElementById('chatMessages');
+      const div = document.createElement('div');
+      div.className = `message ${type}`;
+      div.innerHTML = `<div class="message-content">${content}</div>`;
+      messages.appendChild(div);
+      if (shouldAutoScroll) scrollToBottom();
+      return div;
     }
 
     function showError(msg) {
-        const messages = document.getElementById('chatMessages');
-        const div = document.createElement('div');
-        div.className = 'error-message';
-        div.textContent = msg;
-        messages.appendChild(div);
-        if (shouldAutoScroll) scrollToBottom();
+      const messages = document.getElementById('chatMessages');
+      const div = document.createElement('div');
+      div.className = 'error-message';
+      div.textContent = msg;
+      messages.appendChild(div);
+      if (shouldAutoScroll) scrollToBottom();
     }
 
     function scrollToBottom() {
-        const messages = document.getElementById('chatMessages');
-        messages.scrollTop = messages.scrollHeight;
+      const messages = document.getElementById('chatMessages');
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function handleEnter(event) {
+      if (event.key === 'Enter') sendMessage();
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        loadQAData();
+      loadQAData();
     });
-</script>
-
+  </script>
 </body>
 </html>
