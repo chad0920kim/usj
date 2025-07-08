@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USJ 챗봇 MRK19</title>
+    <title>USJ 챗봇 MRK20</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -349,7 +349,7 @@
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <h1>🎢 USJ 챗봇 MRK19</h1>
+            <h1>🎢 USJ 챗봇 MRK20</h1>
             <div class="subtitle">유니버셜스튜디오 재팬 전문 상담</div>
         </div>
         
@@ -514,49 +514,26 @@
             return relatedQuestions.slice(0, count);
         }
         
-        // 랜덤 질문 선택 함수
+        // ✅ Fisher-Yates 셔플 기반 랜덤 질문 선택 함수
         function getRandomQuestions(count = 2, excludeQuestions = []) {
             if (usjQuestions.length === 0) return [];
-            
             const availableQuestions = usjQuestions.filter(q => !excludeQuestions.includes(q));
-            const shuffled = [...availableQuestions].sort(() => 0.5 - Math.random());
+            const shuffled = [...availableQuestions];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
             return shuffled.slice(0, count);
         }
         
-        // 빠른 질문 업데이트 함수
-        function updateQuickQuestions(relatedToMessage = null) {
-            let newQuestions = [];
-            
-            if (relatedToMessage) {
-                const relatedQuestions = getRelatedQuestions(relatedToMessage, 1);
-                if (relatedQuestions.length > 0) {
-                    newQuestions.push(relatedQuestions[0]);
-                }
-                
-                const excludeQuestions = [...currentQuestions, relatedToMessage, ...relatedQuestions];
-                const randomQuestions = getRandomQuestions(3, excludeQuestions);
-                if (randomQuestions.length > 0) {
-                    newQuestions.push(randomQuestions[0]);
-                }
-                
-                while (newQuestions.length < 2 && newQuestions.length < usjQuestions.length) {
-                    const additionalRandom = getRandomQuestions(1, [...currentQuestions, ...newQuestions]);
-                    if (additionalRandom.length > 0) {
-                        newQuestions.push(additionalRandom[0]);
-                    } else {
-                        break;
-                    }
-                }
-            } else {
-                newQuestions = getRandomQuestions(2, currentQuestions);
-            }
-            
+        // ✅ 완전 랜덤으로만 Quick Questions 업데이트
+        function updateQuickQuestions() {
+            const newQuestions = getRandomQuestions(2, currentQuestions);
             if (currentQuestions.length > 0 && JSON.stringify(currentQuestions) !== JSON.stringify(newQuestions)) {
                 questionHistory = questionHistory.slice(0, historyIndex + 1);
                 questionHistory.push([...currentQuestions]);
                 historyIndex = questionHistory.length - 1;
             }
-            
             currentQuestions = newQuestions;
             renderQuestions();
             updateControlButtons();
@@ -578,7 +555,7 @@
             });
         }
         
-        // 이전 질문 보기
+        // ✅ showPreviousQuestions() 유지
         function showPreviousQuestions() {
             if (historyIndex > 0) {
                 historyIndex--;
@@ -588,22 +565,15 @@
             }
         }
         
-        // 다음 질문 보기
+        // ✅ showNextQuestions() 도 랜덤으로
         function showNextQuestions() {
-            const excludeQuestions = [...currentQuestions];
-            if (historyIndex >= 0) {
-                excludeQuestions.push(...questionHistory[historyIndex]);
-            }
-            
-            const newQuestions = getRandomQuestions(2, excludeQuestions);
-            
+            const newQuestions = getRandomQuestions(2, currentQuestions);
             if (newQuestions.length > 0) {
                 if (currentQuestions.length > 0) {
                     questionHistory = questionHistory.slice(0, historyIndex + 1);
                     questionHistory.push([...currentQuestions]);
                     historyIndex = questionHistory.length - 1;
                 }
-                
                 currentQuestions = newQuestions;
                 renderQuestions();
                 updateControlButtons();
