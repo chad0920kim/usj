@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USJ 벡터 DB 업데이트 MRK1</title>
+    <title>USJ 벡터 DB 업데이트2</title>
     <style>
         * {
             margin: 0;
@@ -16,24 +16,21 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
         .container {
-            max-width: 800px;
-            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
             background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
-            padding: 40px;
+            padding: 30px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
             backdrop-filter: blur(10px);
         }
 
         .header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
         }
 
         .header h1 {
@@ -51,33 +48,36 @@
             font-size: 1.1em;
         }
 
-        .update-section {
-            text-align: center;
+        .control-panel {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
             margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(0, 123, 255, 0.05);
+            border-radius: 15px;
+            border: 2px solid rgba(0, 123, 255, 0.1);
         }
 
         .update-btn {
             background: linear-gradient(45deg, #28a745, #20c997);
             color: white;
             border: none;
-            padding: 20px 40px;
-            font-size: 1.2em;
+            padding: 15px 30px;
+            font-size: 1.1em;
             font-weight: 600;
-            border-radius: 15px;
+            border-radius: 12px;
             cursor: pointer;
             transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 1px;
-            box-shadow: 0 10px 25px rgba(40, 167, 69, 0.3);
+            box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3);
         }
 
         .update-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 35px rgba(40, 167, 69, 0.4);
-        }
-
-        .update-btn:active {
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(40, 167, 69, 0.4);
         }
 
         .update-btn:disabled {
@@ -87,25 +87,13 @@
             box-shadow: none;
         }
 
-        .status-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 20px 0;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
         .status-indicator {
-            display: inline-flex;
+            display: flex;
             align-items: center;
-            padding: 12px 20px;
-            border-radius: 25px;
+            padding: 10px 20px;
+            border-radius: 20px;
             font-weight: 500;
             transition: all 0.3s ease;
-            flex: 1;
-            min-width: 200px;
-            justify-content: center;
         }
 
         .status-ready {
@@ -133,17 +121,6 @@
             border: 2px solid rgba(220, 53, 69, 0.3);
         }
 
-        .progress-info {
-            background: rgba(0, 123, 255, 0.1);
-            color: #007bff;
-            border: 2px solid rgba(0, 123, 255, 0.3);
-            padding: 10px 15px;
-            border-radius: 10px;
-            font-size: 0.9em;
-            min-width: 150px;
-            text-align: center;
-        }
-
         @keyframes pulse {
             0% { opacity: 1; }
             50% { opacity: 0.6; }
@@ -152,85 +129,115 @@
 
         .loading-spinner {
             display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
             border-top-color: #fff;
             animation: spin 1s ease-in-out infinite;
-            margin-right: 10px;
+            margin-right: 8px;
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
 
-        .log-container {
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-item {
+            background: rgba(0, 123, 255, 0.1);
+            color: #007bff;
+            padding: 12px 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid rgba(0, 123, 255, 0.2);
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            opacity: 0.8;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .panel {
             background: #1a202c;
-            color: #e2e8f0;
             border-radius: 15px;
-            padding: 0;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-            font-size: 0.85em;
-            max-height: 500px;
             overflow: hidden;
             border: 2px solid #2d3748;
             box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
         }
 
-        .log-header {
+        .panel-header {
             background: #2d3748;
             color: #e2e8f0;
             padding: 15px 20px;
-            font-size: 1em;
             font-weight: bold;
-            border-bottom: 2px solid #4a5568;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 2px solid #4a5568;
         }
 
-        .log-controls {
+        .panel-controls {
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
 
-        .log-btn {
+        .panel-btn {
             background: #4a5568;
             color: #e2e8f0;
             border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
+            padding: 4px 8px;
+            border-radius: 4px;
             font-size: 0.8em;
             cursor: pointer;
             transition: background 0.2s;
         }
 
-        .log-btn:hover {
+        .panel-btn:hover {
             background: #718096;
         }
 
-        .log-content {
+        .panel-content {
             height: 400px;
             overflow-y: auto;
             padding: 15px 20px;
-            line-height: 1.6;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.85em;
+            line-height: 1.5;
         }
 
-        .log-content::-webkit-scrollbar {
+        .panel-content::-webkit-scrollbar {
             width: 8px;
         }
 
-        .log-content::-webkit-scrollbar-track {
+        .panel-content::-webkit-scrollbar-track {
             background: #2d3748;
         }
 
-        .log-content::-webkit-scrollbar-thumb {
+        .panel-content::-webkit-scrollbar-thumb {
             background: #4a5568;
             border-radius: 4px;
         }
 
-        .log-content::-webkit-scrollbar-thumb:hover {
+        .panel-content::-webkit-scrollbar-thumb:hover {
             background: #718096;
         }
 
@@ -240,29 +247,25 @@
             border-radius: 6px;
             background: rgba(45, 55, 72, 0.3);
             border-left: 4px solid transparent;
-            animation: slideIn 0.3s ease-out;
-            word-wrap: break-word;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+            animation: fadeIn 0.3s ease-in;
         }
 
-        .log-entry.log-info {
+        .log-entry.info {
             border-left-color: #3182ce;
             background: rgba(49, 130, 206, 0.1);
         }
 
-        .log-entry.log-success {
+        .log-entry.success {
             border-left-color: #38a169;
             background: rgba(56, 161, 105, 0.1);
         }
 
-        .log-entry.log-warning {
+        .log-entry.warning {
             border-left-color: #d69e2e;
             background: rgba(214, 158, 46, 0.1);
         }
 
-        .log-entry.log-error {
+        .log-entry.error {
             border-left-color: #e53e3e;
             background: rgba(229, 62, 62, 0.1);
         }
@@ -270,7 +273,7 @@
         .log-meta {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             margin-bottom: 4px;
             flex-wrap: wrap;
         }
@@ -278,16 +281,15 @@
         .log-timestamp {
             color: #38b2ac;
             font-weight: bold;
-            font-size: 0.85em;
+            font-size: 0.8em;
         }
 
         .log-level {
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.75em;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 0.7em;
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         .log-level.info {
@@ -312,87 +314,96 @@
 
         .log-message {
             color: #e2e8f0;
-            line-height: 1.5;
-            margin-left: 0;
+            margin-bottom: 4px;
         }
 
         .log-detail {
             color: #a0aec0;
             font-size: 0.9em;
-            margin-left: 0;
-            margin-top: 4px;
             padding-left: 10px;
             border-left: 2px solid #4a5568;
         }
 
-        @keyframes slideIn {
+        .terminal-entry {
+            margin-bottom: 4px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .terminal-entry.stdout {
+            color: #e2e8f0;
+        }
+
+        .terminal-entry.stderr {
+            color: #fc8181;
+        }
+
+        .terminal-entry.info {
+            color: #90cdf4;
+        }
+
+        .terminal-entry.success {
+            color: #68d391;
+        }
+
+        .terminal-entry.error {
+            color: #fc8181;
+        }
+
+        .terminal-timestamp {
+            color: #38b2ac;
+            font-size: 0.8em;
+            margin-right: 8px;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8em;
+        }
+
+        .connection-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #68d391;
+            animation: pulse 2s infinite;
+        }
+
+        .connection-dot.disconnected {
+            background: #fc8181;
+            animation: none;
+        }
+
+        @keyframes fadeIn {
             from { 
                 opacity: 0; 
-                transform: translateX(-20px);
+                transform: translateY(10px);
             }
             to { 
                 opacity: 1; 
-                transform: translateX(0);
+                transform: translateY(0);
             }
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 4px;
-            overflow: hidden;
-            margin: 20px 0;
-            display: none;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #28a745, #20c997);
-            width: 0%;
-            animation: progressPulse 2s infinite;
-        }
-
-        @keyframes progressPulse {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
         }
 
         .footer {
             text-align: center;
-            margin-top: 30px;
+            margin-top: 20px;
             color: #666;
             font-size: 0.9em;
         }
 
-        .stats-section {
-            display: flex;
-            justify-content: space-around;
-            margin: 20px 0;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .stat-item {
-            background: rgba(0, 123, 255, 0.1);
-            color: #007bff;
-            padding: 10px 15px;
-            border-radius: 10px;
-            text-align: center;
-            flex: 1;
-            min-width: 120px;
-            border: 1px solid rgba(0, 123, 255, 0.2);
-        }
-
-        .stat-label {
-            font-size: 0.8em;
-            opacity: 0.8;
-            margin-bottom: 5px;
-        }
-
-        .stat-value {
-            font-weight: bold;
-            font-size: 1.1em;
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .control-panel {
+                flex-direction: column;
+                gap: 15px;
+            }
         }
 
         @media (max-width: 768px) {
@@ -405,27 +416,12 @@
                 font-size: 1.8em;
             }
 
-            .update-btn {
-                padding: 15px 30px;
-                font-size: 1.1em;
+            .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
             }
 
-            .status-section {
-                flex-direction: column;
-            }
-
-            .status-indicator {
-                min-width: 100%;
-            }
-
-            .log-meta {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 5px;
-            }
-
-            .stats-section {
-                flex-direction: column;
+            .panel-content {
+                height: 300px;
             }
         }
     </style>
@@ -434,32 +430,26 @@
     <div class="container">
         <div class="header">
             <h1>🎢 USJ 벡터 DB 업데이트</h1>
-            <p>실시간 모니터링이 가능한 업데이트 시스템</p>
+            <p>실시간 터미널 출력과 모니터링이 가능한 업데이트 시스템</p>
         </div>
 
-        <div class="update-section">
+        <div class="control-panel">
             <button class="update-btn" onclick="startUpdate()" id="updateBtn">
                 🔄 벡터 DB 업데이트 시작
             </button>
-            
-            <div class="progress-bar" id="progressBar">
-                <div class="progress-fill"></div>
-            </div>
-        </div>
-
-        <div class="status-section">
             <div class="status-indicator status-ready" id="statusIndicator">
                 💚 업데이트 준비 완료
             </div>
-            <div class="progress-info" id="progressInfo">
-                대기 중
-            </div>
         </div>
 
-        <div class="stats-section" id="statsSection">
+        <div class="stats-bar">
             <div class="stat-item">
-                <div class="stat-label">총 로그</div>
-                <div class="stat-value" id="totalLogs">0</div>
+                <div class="stat-label">시스템 로그</div>
+                <div class="stat-value" id="totalLogs">1</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">터미널 출력</div>
+                <div class="stat-value" id="terminalLines">1</div>
             </div>
             <div class="stat-item">
                 <div class="stat-label">진행 시간</div>
@@ -470,33 +460,57 @@
                 <div class="stat-value" id="statusChecks">0</div>
             </div>
             <div class="stat-item">
-                <div class="stat-label">마지막 업데이트</div>
-                <div class="stat-value" id="lastUpdate">-</div>
+                <div class="stat-label">연결 상태</div>
+                <div class="stat-value" id="connectionCount">0/2</div>
             </div>
         </div>
 
-        <div class="log-container">
-            <div class="log-header">
-                📋 실시간 업데이트 로그
-                <div class="log-controls">
-                    <button class="log-btn" onclick="clearLogs()">지우기</button>
-                    <button class="log-btn" onclick="toggleAutoScroll()" id="autoScrollBtn">자동스크롤: ON</button>
+        <div class="main-grid">
+            <div class="panel">
+                <div class="panel-header">
+                    📋 시스템 로그
+                    <div class="panel-controls">
+                        <button class="panel-btn" onclick="clearLogs()">지우기</button>
+                        <button class="panel-btn" onclick="toggleAutoScroll()" id="autoScrollBtn">자동스크롤: ON</button>
+                    </div>
+                </div>
+                <div class="panel-content" id="logContent">
+                    <div class="log-entry info">
+                        <div class="log-meta">
+                            <span class="log-timestamp">[2025-01-10 12:00:00]</span>
+                            <span class="log-level info">INFO</span>
+                        </div>
+                        <div class="log-message">🎯 USJ 벡터 DB 업데이트 시스템 초기화 완료</div>
+                    </div>
                 </div>
             </div>
-            <div class="log-content" id="logContent">
-                <div class="log-entry log-info">
-                    <div class="log-meta">
-                        <span class="log-timestamp">[2025-01-10 12:00:00]</span>
-                        <span class="log-level info">INFO</span>
+
+            <div class="panel">
+                <div class="panel-header">
+                    🖥️ 실시간 터미널 출력
+                    <div class="panel-controls">
+                        <div class="connection-status">
+                            <div class="connection-dot" id="connectionDot"></div>
+                            <span id="connectionStatus">연결 중...</span>
+                        </div>
+                        <button class="panel-btn" onclick="clearTerminal()">지우기</button>
+                        <button class="panel-btn" onclick="reconnectTerminal()">재연결</button>
                     </div>
-                    <div class="log-message">🎯 USJ 벡터 DB 업데이트 시스템 초기화 완료</div>
+                </div>
+                <div class="panel-content" id="terminalContent">
+                    <div class="terminal-entry info">
+                        <span class="terminal-timestamp">[시작]</span>터미널 출력 스트리밍 준비 중...
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="footer">
-            <p>🎯 USJ 챗봇 벡터 DB 자동 업데이트 시스템</p>
+            <p>🎯 USJ 챗봇 벡터 DB 자동 업데이트 시스템 v1.2.0</p>
             <p><code>https://usj-chatbot.run.goorm.site</code></p>
+            <p style="margin-top: 10px; font-size: 0.8em;">
+                키보드 단축키: Ctrl+U (업데이트), Ctrl+L (로그 지우기), Ctrl+T (터미널 지우기), Ctrl+R (재연결)
+            </p>
         </div>
     </div>
 
@@ -508,15 +522,137 @@
         let startTime = null;
         let timerInterval = null;
         let totalLogs = 1;
+        let terminalLines = 1;
         let statusChecks = 0;
+        let terminalEventSource = null;
+        let terminalConnected = false;
+        let statusConnected = false;
 
-        // 로그 추가 함수 (개선됨)
+        // 터미널 출력 관리
+        function connectTerminal() {
+            if (terminalEventSource) {
+                terminalEventSource.close();
+            }
+
+            try {
+                terminalEventSource = new EventSource(`${API_BASE}/terminal-output`);
+                
+                terminalEventSource.onopen = function() {
+                    terminalConnected = true;
+                    updateConnectionStatus();
+                    addTerminalLine('✅ 터미널 스트리밍 연결 성공', 'success');
+                };
+
+                terminalEventSource.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        handleTerminalMessage(data);
+                    } catch (e) {
+                        console.error('터미널 메시지 파싱 오류:', e);
+                    }
+                };
+
+                terminalEventSource.onerror = function(event) {
+                    terminalConnected = false;
+                    updateConnectionStatus();
+                    addTerminalLine('❌ 터미널 연결 오류 - 재연결 시도 중...', 'error');
+                    
+                    setTimeout(() => {
+                        if (!terminalConnected) {
+                            connectTerminal();
+                        }
+                    }, 3000);
+                };
+
+            } catch (error) {
+                addTerminalLine(`❌ 터미널 연결 실패: ${error.message}`, 'error');
+            }
+        }
+
+        function handleTerminalMessage(data) {
+            if (data.type === 'keepalive') {
+                return;
+            }
+
+            const typeClass = data.type || 'stdout';
+            const timestamp = new Date(data.timestamp).toLocaleTimeString('ko-KR');
+            const content = data.content || '';
+            
+            if (content.trim()) {
+                addTerminalLine(`[${timestamp}] ${content}`, typeClass);
+            }
+        }
+
+        function addTerminalLine(content, type = 'stdout') {
+            const terminalContent = document.getElementById('terminalContent');
+            
+            const entry = document.createElement('div');
+            entry.className = `terminal-entry ${type}`;
+            entry.textContent = content;
+            
+            if (autoScroll) {
+                terminalContent.insertBefore(entry, terminalContent.firstChild);
+            } else {
+                terminalContent.appendChild(entry);
+            }
+            
+            while (terminalContent.children.length > 100) {
+                if (autoScroll) {
+                    terminalContent.removeChild(terminalContent.lastChild);
+                } else {
+                    terminalContent.removeChild(terminalContent.firstChild);
+                }
+            }
+            
+            if (autoScroll) {
+                terminalContent.scrollTop = 0;
+            } else {
+                terminalContent.scrollTop = terminalContent.scrollHeight;
+            }
+
+            terminalLines++;
+            updateStats();
+        }
+
+        function clearTerminal() {
+            document.getElementById('terminalContent').innerHTML = '';
+            terminalLines = 0;
+            updateStats();
+            addTerminalLine('터미널이 지워졌습니다', 'info');
+        }
+
+        function reconnectTerminal() {
+            addTerminalLine('터미널 재연결 시도 중...', 'info');
+            connectTerminal();
+        }
+
+        function updateConnectionStatus() {
+            const dot = document.getElementById('connectionDot');
+            const status = document.getElementById('connectionStatus');
+            const count = document.getElementById('connectionCount');
+            
+            const totalConnections = (terminalConnected ? 1 : 0) + (statusConnected ? 1 : 0);
+            
+            if (totalConnections === 2) {
+                dot.className = 'connection-dot';
+                status.textContent = '연결됨';
+            } else if (totalConnections === 1) {
+                dot.className = 'connection-dot';
+                status.textContent = '부분 연결';
+            } else {
+                dot.className = 'connection-dot disconnected';
+                status.textContent = '연결 끊김';
+            }
+            
+            count.textContent = `${totalConnections}/2`;
+        }
+
         function addLog(message, level = 'info', detail = null) {
             const logContent = document.getElementById('logContent');
             const timestamp = new Date().toLocaleString('ko-KR');
             
             const logEntry = document.createElement('div');
-            logEntry.className = `log-entry log-${level}`;
+            logEntry.className = `log-entry ${level}`;
             
             let detailHtml = '';
             if (detail) {
@@ -538,7 +674,6 @@
                 logContent.appendChild(logEntry);
             }
             
-            // 로그 개수 제한 (최대 50개)
             while (logContent.children.length > 50) {
                 if (autoScroll) {
                     logContent.removeChild(logContent.lastChild);
@@ -547,24 +682,19 @@
                 }
             }
             
-            // 자동 스크롤
             if (autoScroll) {
                 logContent.scrollTop = 0;
             } else {
                 logContent.scrollTop = logContent.scrollHeight;
             }
 
-            // 통계 업데이트
             totalLogs++;
             updateStats();
         }
 
-        // 상태 업데이트 함수 (개선됨)
-        function updateStatus(status, message, progress = null) {
+        function updateStatus(status) {
             const indicator = document.getElementById('statusIndicator');
             const btn = document.getElementById('updateBtn');
-            const progressBar = document.getElementById('progressBar');
-            const progressInfo = document.getElementById('progressInfo');
             
             indicator.className = `status-indicator status-${status}`;
             
@@ -573,37 +703,28 @@
                     indicator.innerHTML = '💚 업데이트 준비 완료';
                     btn.innerHTML = '🔄 벡터 DB 업데이트 시작';
                     btn.disabled = false;
-                    progressBar.style.display = 'none';
-                    progressInfo.textContent = '대기 중';
                     stopTimer();
                     break;
                 case 'updating':
                     indicator.innerHTML = '🔄 업데이트 진행 중...';
                     btn.innerHTML = '<span class="loading-spinner"></span>업데이트 중...';
                     btn.disabled = true;
-                    progressBar.style.display = 'block';
-                    progressInfo.textContent = progress || '진행 중...';
                     startTimer();
                     break;
                 case 'success':
                     indicator.innerHTML = '✅ 업데이트 완료!';
                     btn.innerHTML = '🔄 벡터 DB 업데이트 시작';
                     btn.disabled = false;
-                    progressBar.style.display = 'none';
-                    progressInfo.textContent = '완료됨';
                     break;
                 case 'error':
                     indicator.innerHTML = '❌ 업데이트 실패';
                     btn.innerHTML = '🔄 다시 시도';
                     btn.disabled = false;
-                    progressBar.style.display = 'none';
-                    progressInfo.textContent = '실패';
                     stopTimer();
                     break;
             }
         }
 
-        // 타이머 관련 함수들
         function startTimer() {
             if (timerInterval) return;
             
@@ -629,14 +750,12 @@
                 `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         }
 
-        // 통계 업데이트
         function updateStats() {
             document.getElementById('totalLogs').textContent = totalLogs;
+            document.getElementById('terminalLines').textContent = terminalLines;
             document.getElementById('statusChecks').textContent = statusChecks;
-            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('ko-KR');
         }
 
-        // 로그 제어 함수들
         function clearLogs() {
             document.getElementById('logContent').innerHTML = '';
             totalLogs = 0;
@@ -650,7 +769,6 @@
             btn.textContent = `자동스크롤: ${autoScroll ? 'ON' : 'OFF'}`;
         }
 
-        // API 호출 함수
         async function apiCall(endpoint, method = 'GET') {
             try {
                 const response = await fetch(`${API_BASE}${endpoint}`, {
@@ -671,13 +789,14 @@
             }
         }
 
-        // 상태 확인 함수 (개선됨)
         async function checkStatus() {
             try {
                 statusChecks++;
+                statusConnected = true;
+                updateConnectionStatus();
+                
                 const status = await apiCall('/vector-update-status');
                 
-                // 세부 정보 로깅
                 const vectorInfo = status.vector_db_info;
                 let statusDetail = `경로: ${vectorInfo?.path || 'N/A'}`;
                 if (vectorInfo?.exists) {
@@ -690,9 +809,13 @@
                     statusDetail += ` | 존재: ❌`;
                 }
                 
+                if (status.terminal_clients !== undefined) {
+                    statusDetail += ` | 터미널 클라이언트: ${status.terminal_clients}`;
+                }
+                
                 if (status.is_updating && !isUpdating) {
                     isUpdating = true;
-                    updateStatus('updating', null, '백그라운드 실행 중');
+                    updateStatus('updating');
                     addLog('🔍 진행 중인 업데이트 감지됨', 'warning', statusDetail);
                     startPolling();
                 } else if (!status.is_updating && isUpdating) {
@@ -713,7 +836,6 @@
                         addLog('❌ 업데이트 실패', 'error', lastStatus.message);
                     }
                 } else if (status.is_updating) {
-                    // 업데이트 진행 중 세부 정보
                     const elapsed = startTime ? Math.floor((Date.now() - startTime) / 1000) : 0;
                     addLog(`📊 업데이트 진행 중 (${elapsed}초 경과)`, 'info', statusDetail);
                 }
@@ -721,16 +843,17 @@
                 updateStats();
                 
             } catch (error) {
+                statusConnected = false;
+                updateConnectionStatus();
                 addLog('❌ 상태 확인 오류', 'error', error.message);
             }
         }
 
-        // 업데이트 시작 함수 (개선됨)
         async function startUpdate() {
             if (isUpdating) return;
             
-            addLog('🚀 벡터 DB 업데이트 요청 시작', 'info', 'API 호출 준비 중...');
-            updateStatus('updating', null, 'API 호출 중');
+            addLog('🚀 벡터 DB 업데이트 요청 시작', 'info', 'API 호출 및 터미널 스트리밍 준비 중...');
+            updateStatus('updating');
             isUpdating = true;
             
             try {
@@ -738,13 +861,11 @@
                 
                 if (result.status === 'started') {
                     addLog('✅ 업데이트 요청 성공', 'success', 
-                          'usj_vector_builder.py 스크립트가 백그라운드에서 실행됩니다');
-                    updateStatus('updating', null, 'usj_vector_builder.py 실행 중');
+                          'usj_vector_builder.py 스크립트가 백그라운드에서 실행되며 터미널 출력을 확인할 수 있습니다');
                     startPolling();
                 } else if (result.status === 'already_running') {
                     addLog('⚠️ 이미 진행 중인 업데이트 발견', 'warning', 
                           '기존 업데이트 프로세스를 모니터링합니다');
-                    updateStatus('updating', null, '기존 프로세스 모니터링');
                     startPolling();
                 } else {
                     throw new Error('예상하지 못한 응답: ' + result.status);
@@ -757,7 +878,6 @@
             }
         }
 
-        // 폴링 시작
         function startPolling() {
             if (updatePollingInterval) return;
             
@@ -765,7 +885,6 @@
             updatePollingInterval = setInterval(checkStatus, 3000);
         }
 
-        // 폴링 중지
         function stopPolling() {
             if (updatePollingInterval) {
                 clearInterval(updatePollingInterval);
@@ -777,19 +896,26 @@
         // 초기화
         document.addEventListener('DOMContentLoaded', function() {
             addLog('🎯 USJ 벡터 DB 업데이트 시스템 초기화 완료', 'success', 
-                  '모든 기능이 정상적으로 로드되었습니다');
+                  '터미널 스트리밍과 상태 모니터링이 활성화되었습니다');
+            
+            // 터미널 연결 시작
+            connectTerminal();
             
             // 초기 상태 확인
             setTimeout(checkStatus, 1000);
             
             // 통계 초기화
             updateStats();
+            updateConnectionStatus();
         });
 
         // 페이지 언로드 시 정리
         window.addEventListener('beforeunload', function() {
             stopPolling();
             stopTimer();
+            if (terminalEventSource) {
+                terminalEventSource.close();
+            }
         });
 
         // 키보드 단축키
@@ -802,8 +928,19 @@
             } else if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
                 e.preventDefault();
                 clearLogs();
+            } else if ((e.ctrlKey || e.metaKey) && e.key === 't') {
+                e.preventDefault();
+                clearTerminal();
+            } else if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                e.preventDefault();
+                reconnectTerminal();
             }
         });
+
+        // 연결 상태 주기적 확인
+        setInterval(() => {
+            updateConnectionStatus();
+        }, 5000);
     </script>
 </body>
 </html>
