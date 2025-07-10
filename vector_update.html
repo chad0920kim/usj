@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>USJ 벡터 DB 업데이트</title>
+    <title>USJ 벡터 DB 업데이트 MRK1</title>
     <style>
         * {
             margin: 0;
@@ -22,7 +22,7 @@
         }
 
         .container {
-            max-width: 600px;
+            max-width: 800px;
             width: 100%;
             background: rgba(255, 255, 255, 0.95);
             border-radius: 20px;
@@ -87,14 +87,25 @@
             box-shadow: none;
         }
 
+        .status-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
         .status-indicator {
             display: inline-flex;
             align-items: center;
-            margin-top: 15px;
-            padding: 10px 20px;
+            padding: 12px 20px;
             border-radius: 25px;
             font-weight: 500;
             transition: all 0.3s ease;
+            flex: 1;
+            min-width: 200px;
+            justify-content: center;
         }
 
         .status-ready {
@@ -122,6 +133,17 @@
             border: 2px solid rgba(220, 53, 69, 0.3);
         }
 
+        .progress-info {
+            background: rgba(0, 123, 255, 0.1);
+            color: #007bff;
+            border: 2px solid rgba(0, 123, 255, 0.3);
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 0.9em;
+            min-width: 150px;
+            text-align: center;
+        }
+
         @keyframes pulse {
             0% { opacity: 1; }
             50% { opacity: 0.6; }
@@ -144,80 +166,181 @@
         }
 
         .log-container {
-            background: #2d3748;
+            background: #1a202c;
             color: #e2e8f0;
             border-radius: 15px;
-            padding: 25px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9em;
-            max-height: 400px;
-            overflow-y: auto;
-            border: 2px solid #4a5568;
+            padding: 0;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.85em;
+            max-height: 500px;
+            overflow: hidden;
+            border: 2px solid #2d3748;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
         }
 
         .log-header {
+            background: #2d3748;
             color: #e2e8f0;
-            margin-bottom: 15px;
-            font-size: 1.1em;
+            padding: 15px 20px;
+            font-size: 1em;
             font-weight: bold;
-            border-bottom: 1px solid #4a5568;
-            padding-bottom: 10px;
+            border-bottom: 2px solid #4a5568;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .log-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .log-btn {
+            background: #4a5568;
+            color: #e2e8f0;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .log-btn:hover {
+            background: #718096;
+        }
+
+        .log-content {
+            height: 400px;
+            overflow-y: auto;
+            padding: 15px 20px;
+            line-height: 1.6;
+        }
+
+        .log-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .log-content::-webkit-scrollbar-track {
+            background: #2d3748;
+        }
+
+        .log-content::-webkit-scrollbar-thumb {
+            background: #4a5568;
+            border-radius: 4px;
+        }
+
+        .log-content::-webkit-scrollbar-thumb:hover {
+            background: #718096;
         }
 
         .log-entry {
             margin-bottom: 8px;
-            padding: 8px 0;
-            border-bottom: 1px solid #4a5568;
-            animation: fadeIn 0.5s ease-in;
+            padding: 8px 12px;
+            border-radius: 6px;
+            background: rgba(45, 55, 72, 0.3);
+            border-left: 4px solid transparent;
+            animation: slideIn 0.3s ease-out;
+            word-wrap: break-word;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
 
-        .log-entry:last-child {
-            border-bottom: none;
+        .log-entry.log-info {
+            border-left-color: #3182ce;
+            background: rgba(49, 130, 206, 0.1);
+        }
+
+        .log-entry.log-success {
+            border-left-color: #38a169;
+            background: rgba(56, 161, 105, 0.1);
+        }
+
+        .log-entry.log-warning {
+            border-left-color: #d69e2e;
+            background: rgba(214, 158, 46, 0.1);
+        }
+
+        .log-entry.log-error {
+            border-left-color: #e53e3e;
+            background: rgba(229, 62, 62, 0.1);
+        }
+
+        .log-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 4px;
+            flex-wrap: wrap;
         }
 
         .log-timestamp {
             color: #38b2ac;
             font-weight: bold;
+            font-size: 0.85em;
         }
 
         .log-level {
             padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 0.8em;
-            margin: 0 8px;
+            border-radius: 12px;
+            font-size: 0.75em;
             font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .log-info {
+        .log-level.info {
             background: #3182ce;
             color: white;
         }
 
-        .log-success {
+        .log-level.success {
             background: #38a169;
             color: white;
         }
 
-        .log-warning {
+        .log-level.warning {
             background: #d69e2e;
             color: white;
         }
 
-        .log-error {
+        .log-level.error {
             background: #e53e3e;
             color: white;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .log-message {
+            color: #e2e8f0;
+            line-height: 1.5;
+            margin-left: 0;
+        }
+
+        .log-detail {
+            color: #a0aec0;
+            font-size: 0.9em;
+            margin-left: 0;
+            margin-top: 4px;
+            padding-left: 10px;
+            border-left: 2px solid #4a5568;
+        }
+
+        @keyframes slideIn {
+            from { 
+                opacity: 0; 
+                transform: translateX(-20px);
+            }
+            to { 
+                opacity: 1; 
+                transform: translateX(0);
+            }
         }
 
         .progress-bar {
             width: 100%;
-            height: 6px;
+            height: 8px;
             background: rgba(255, 255, 255, 0.3);
-            border-radius: 3px;
+            border-radius: 4px;
             overflow: hidden;
             margin: 20px 0;
             display: none;
@@ -242,10 +365,40 @@
             font-size: 0.9em;
         }
 
+        .stats-section {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            background: rgba(0, 123, 255, 0.1);
+            color: #007bff;
+            padding: 10px 15px;
+            border-radius: 10px;
+            text-align: center;
+            flex: 1;
+            min-width: 120px;
+            border: 1px solid rgba(0, 123, 255, 0.2);
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
         @media (max-width: 768px) {
             .container {
                 margin: 10px;
-                padding: 30px 20px;
+                padding: 20px;
             }
 
             .header h1 {
@@ -256,6 +409,24 @@
                 padding: 15px 30px;
                 font-size: 1.1em;
             }
+
+            .status-section {
+                flex-direction: column;
+            }
+
+            .status-indicator {
+                min-width: 100%;
+            }
+
+            .log-meta {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+
+            .stats-section {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -263,7 +434,7 @@
     <div class="container">
         <div class="header">
             <h1>🎢 USJ 벡터 DB 업데이트</h1>
-            <p>간단하고 빠른 업데이트 시스템</p>
+            <p>실시간 모니터링이 가능한 업데이트 시스템</p>
         </div>
 
         <div class="update-section">
@@ -274,19 +445,51 @@
             <div class="progress-bar" id="progressBar">
                 <div class="progress-fill"></div>
             </div>
-            
+        </div>
+
+        <div class="status-section">
             <div class="status-indicator status-ready" id="statusIndicator">
                 💚 업데이트 준비 완료
+            </div>
+            <div class="progress-info" id="progressInfo">
+                대기 중
+            </div>
+        </div>
+
+        <div class="stats-section" id="statsSection">
+            <div class="stat-item">
+                <div class="stat-label">총 로그</div>
+                <div class="stat-value" id="totalLogs">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">진행 시간</div>
+                <div class="stat-value" id="elapsedTime">00:00</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">상태 확인</div>
+                <div class="stat-value" id="statusChecks">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">마지막 업데이트</div>
+                <div class="stat-value" id="lastUpdate">-</div>
             </div>
         </div>
 
         <div class="log-container">
-            <div class="log-header">📋 실시간 업데이트 로그</div>
-            <div id="logContent">
-                <div class="log-entry">
-                    <span class="log-timestamp">[2025-01-10 12:00:00]</span>
-                    <span class="log-level log-info">INFO</span>
-                    <span>시스템 준비 완료</span>
+            <div class="log-header">
+                📋 실시간 업데이트 로그
+                <div class="log-controls">
+                    <button class="log-btn" onclick="clearLogs()">지우기</button>
+                    <button class="log-btn" onclick="toggleAutoScroll()" id="autoScrollBtn">자동스크롤: ON</button>
+                </div>
+            </div>
+            <div class="log-content" id="logContent">
+                <div class="log-entry log-info">
+                    <div class="log-meta">
+                        <span class="log-timestamp">[2025-01-10 12:00:00]</span>
+                        <span class="log-level info">INFO</span>
+                    </div>
+                    <div class="log-message">🎯 USJ 벡터 DB 업데이트 시스템 초기화 완료</div>
                 </div>
             </div>
         </div>
@@ -301,36 +504,67 @@
         const API_BASE = 'https://usj-chatbot.run.goorm.site';
         let updatePollingInterval;
         let isUpdating = false;
+        let autoScroll = true;
+        let startTime = null;
+        let timerInterval = null;
+        let totalLogs = 1;
+        let statusChecks = 0;
 
-        // 로그 추가 함수
-        function addLog(message, level = 'info') {
+        // 로그 추가 함수 (개선됨)
+        function addLog(message, level = 'info', detail = null) {
             const logContent = document.getElementById('logContent');
             const timestamp = new Date().toLocaleString('ko-KR');
             
             const logEntry = document.createElement('div');
-            logEntry.className = 'log-entry';
-            logEntry.innerHTML = `
-                <span class="log-timestamp">[${timestamp}]</span>
-                <span class="log-level log-${level}">${level.toUpperCase()}</span>
-                <span>${message}</span>
-            `;
+            logEntry.className = `log-entry log-${level}`;
             
-            logContent.insertBefore(logEntry, logContent.firstChild);
-            
-            // 로그 개수 제한 (최대 30개)
-            while (logContent.children.length > 30) {
-                logContent.removeChild(logContent.lastChild);
+            let detailHtml = '';
+            if (detail) {
+                detailHtml = `<div class="log-detail">${detail}</div>`;
             }
             
-            // 스크롤을 맨 위로
-            logContent.scrollTop = 0;
+            logEntry.innerHTML = `
+                <div class="log-meta">
+                    <span class="log-timestamp">[${timestamp}]</span>
+                    <span class="log-level ${level}">${level.toUpperCase()}</span>
+                </div>
+                <div class="log-message">${message}</div>
+                ${detailHtml}
+            `;
+            
+            if (autoScroll) {
+                logContent.insertBefore(logEntry, logContent.firstChild);
+            } else {
+                logContent.appendChild(logEntry);
+            }
+            
+            // 로그 개수 제한 (최대 50개)
+            while (logContent.children.length > 50) {
+                if (autoScroll) {
+                    logContent.removeChild(logContent.lastChild);
+                } else {
+                    logContent.removeChild(logContent.firstChild);
+                }
+            }
+            
+            // 자동 스크롤
+            if (autoScroll) {
+                logContent.scrollTop = 0;
+            } else {
+                logContent.scrollTop = logContent.scrollHeight;
+            }
+
+            // 통계 업데이트
+            totalLogs++;
+            updateStats();
         }
 
-        // 상태 업데이트 함수
-        function updateStatus(status, message) {
+        // 상태 업데이트 함수 (개선됨)
+        function updateStatus(status, message, progress = null) {
             const indicator = document.getElementById('statusIndicator');
             const btn = document.getElementById('updateBtn');
             const progressBar = document.getElementById('progressBar');
+            const progressInfo = document.getElementById('progressInfo');
             
             indicator.className = `status-indicator status-${status}`;
             
@@ -340,26 +574,80 @@
                     btn.innerHTML = '🔄 벡터 DB 업데이트 시작';
                     btn.disabled = false;
                     progressBar.style.display = 'none';
+                    progressInfo.textContent = '대기 중';
+                    stopTimer();
                     break;
                 case 'updating':
                     indicator.innerHTML = '🔄 업데이트 진행 중...';
                     btn.innerHTML = '<span class="loading-spinner"></span>업데이트 중...';
                     btn.disabled = true;
                     progressBar.style.display = 'block';
+                    progressInfo.textContent = progress || '진행 중...';
+                    startTimer();
                     break;
                 case 'success':
                     indicator.innerHTML = '✅ 업데이트 완료!';
                     btn.innerHTML = '🔄 벡터 DB 업데이트 시작';
                     btn.disabled = false;
                     progressBar.style.display = 'none';
+                    progressInfo.textContent = '완료됨';
                     break;
                 case 'error':
                     indicator.innerHTML = '❌ 업데이트 실패';
                     btn.innerHTML = '🔄 다시 시도';
                     btn.disabled = false;
                     progressBar.style.display = 'none';
+                    progressInfo.textContent = '실패';
+                    stopTimer();
                     break;
             }
+        }
+
+        // 타이머 관련 함수들
+        function startTimer() {
+            if (timerInterval) return;
+            
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function updateTimer() {
+            if (!startTime) return;
+            
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            
+            document.getElementById('elapsedTime').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // 통계 업데이트
+        function updateStats() {
+            document.getElementById('totalLogs').textContent = totalLogs;
+            document.getElementById('statusChecks').textContent = statusChecks;
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('ko-KR');
+        }
+
+        // 로그 제어 함수들
+        function clearLogs() {
+            document.getElementById('logContent').innerHTML = '';
+            totalLogs = 0;
+            updateStats();
+            addLog('로그가 지워졌습니다', 'info');
+        }
+
+        function toggleAutoScroll() {
+            autoScroll = !autoScroll;
+            const btn = document.getElementById('autoScrollBtn');
+            btn.textContent = `자동스크롤: ${autoScroll ? 'ON' : 'OFF'}`;
         }
 
         // API 호출 함수
@@ -383,65 +671,87 @@
             }
         }
 
-        // 상태 확인 함수
+        // 상태 확인 함수 (개선됨)
         async function checkStatus() {
             try {
+                statusChecks++;
                 const status = await apiCall('/vector-update-status');
                 
+                // 세부 정보 로깅
+                const vectorInfo = status.vector_db_info;
+                let statusDetail = `경로: ${vectorInfo?.path || 'N/A'}`;
+                if (vectorInfo?.exists) {
+                    statusDetail += ` | 존재: ✅`;
+                    if (vectorInfo.last_modified) {
+                        const modTime = new Date(vectorInfo.last_modified).toLocaleString('ko-KR');
+                        statusDetail += ` | 수정: ${modTime}`;
+                    }
+                } else {
+                    statusDetail += ` | 존재: ❌`;
+                }
+                
                 if (status.is_updating && !isUpdating) {
-                    // 업데이트가 진행 중인데 클라이언트가 모르고 있던 경우
                     isUpdating = true;
-                    updateStatus('updating');
-                    addLog('진행 중인 업데이트 감지됨', 'warning');
+                    updateStatus('updating', null, '백그라운드 실행 중');
+                    addLog('🔍 진행 중인 업데이트 감지됨', 'warning', statusDetail);
                     startPolling();
                 } else if (!status.is_updating && isUpdating) {
-                    // 업데이트가 완료된 경우
                     isUpdating = false;
                     stopPolling();
                     
                     const lastStatus = status.last_update_status;
                     if (lastStatus && lastStatus.status === 'success') {
                         updateStatus('success');
-                        addLog('✨ 벡터 DB 업데이트 완료!', 'success');
+                        addLog('🎉 벡터 DB 업데이트 완료!', 'success', 
+                              `완료 시간: ${new Date(lastStatus.timestamp).toLocaleString('ko-KR')}`);
                         
-                        // 3초 후 준비 상태로 돌아가기
                         setTimeout(() => {
                             updateStatus('ready');
-                        }, 3000);
+                        }, 5000);
                     } else if (lastStatus && lastStatus.status === 'error') {
                         updateStatus('error');
-                        addLog(`❌ 업데이트 실패: ${lastStatus.message}`, 'error');
+                        addLog('❌ 업데이트 실패', 'error', lastStatus.message);
                     }
+                } else if (status.is_updating) {
+                    // 업데이트 진행 중 세부 정보
+                    const elapsed = startTime ? Math.floor((Date.now() - startTime) / 1000) : 0;
+                    addLog(`📊 업데이트 진행 중 (${elapsed}초 경과)`, 'info', statusDetail);
                 }
                 
+                updateStats();
+                
             } catch (error) {
-                addLog(`상태 확인 오류: ${error.message}`, 'error');
+                addLog('❌ 상태 확인 오류', 'error', error.message);
             }
         }
 
-        // 업데이트 시작 함수
+        // 업데이트 시작 함수 (개선됨)
         async function startUpdate() {
             if (isUpdating) return;
             
-            addLog('🚀 벡터 DB 업데이트 요청 시작...', 'info');
-            updateStatus('updating');
+            addLog('🚀 벡터 DB 업데이트 요청 시작', 'info', 'API 호출 준비 중...');
+            updateStatus('updating', null, 'API 호출 중');
             isUpdating = true;
             
             try {
                 const result = await apiCall('/update-vector-db', 'POST');
                 
                 if (result.status === 'started') {
-                    addLog('✅ 업데이트 요청 성공 - 백그라운드에서 진행 중', 'success');
+                    addLog('✅ 업데이트 요청 성공', 'success', 
+                          'usj_vector_builder.py 스크립트가 백그라운드에서 실행됩니다');
+                    updateStatus('updating', null, 'usj_vector_builder.py 실행 중');
                     startPolling();
                 } else if (result.status === 'already_running') {
-                    addLog('⚠️ 이미 업데이트가 진행 중입니다', 'warning');
+                    addLog('⚠️ 이미 진행 중인 업데이트 발견', 'warning', 
+                          '기존 업데이트 프로세스를 모니터링합니다');
+                    updateStatus('updating', null, '기존 프로세스 모니터링');
                     startPolling();
                 } else {
-                    throw new Error('알 수 없는 응답: ' + result.status);
+                    throw new Error('예상하지 못한 응답: ' + result.status);
                 }
                 
             } catch (error) {
-                addLog(`❌ 업데이트 요청 실패: ${error.message}`, 'error');
+                addLog('❌ 업데이트 요청 실패', 'error', error.message);
                 updateStatus('error');
                 isUpdating = false;
             }
@@ -451,8 +761,8 @@
         function startPolling() {
             if (updatePollingInterval) return;
             
-            addLog('⏳ 업데이트 진행 상황 모니터링 시작', 'info');
-            updatePollingInterval = setInterval(checkStatus, 3000); // 3초마다 확인
+            addLog('⏳ 실시간 모니터링 시작', 'info', '3초마다 상태를 확인합니다');
+            updatePollingInterval = setInterval(checkStatus, 3000);
         }
 
         // 폴링 중지
@@ -460,30 +770,38 @@
             if (updatePollingInterval) {
                 clearInterval(updatePollingInterval);
                 updatePollingInterval = null;
-                addLog('✋ 모니터링 중지', 'info');
+                addLog('✋ 실시간 모니터링 중지', 'info');
             }
         }
 
         // 초기화
         document.addEventListener('DOMContentLoaded', function() {
-            addLog('🎯 USJ 벡터 DB 업데이트 시스템 초기화 완료', 'success');
+            addLog('🎯 USJ 벡터 DB 업데이트 시스템 초기화 완료', 'success', 
+                  '모든 기능이 정상적으로 로드되었습니다');
             
             // 초기 상태 확인
-            checkStatus();
+            setTimeout(checkStatus, 1000);
+            
+            // 통계 초기화
+            updateStats();
         });
 
         // 페이지 언로드 시 정리
         window.addEventListener('beforeunload', function() {
             stopPolling();
+            stopTimer();
         });
 
-        // 키보드 단축키 (Ctrl+U로 업데이트)
+        // 키보드 단축키
         document.addEventListener('keydown', function(e) {
             if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
                 e.preventDefault();
                 if (!isUpdating) {
                     startUpdate();
                 }
+            } else if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
+                e.preventDefault();
+                clearLogs();
             }
         });
     </script>
