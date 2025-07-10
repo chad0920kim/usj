@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USJ 벡터 DB 업데이트</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .update-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .update-btn {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 1.2em;
+            font-weight: 600;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 10px 25px rgba(40, 167, 69, 0.3);
+        }
+
+        .update-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(40, 167, 69, 0.4);
+        }
+
+        .update-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .update-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            margin-top: 15px;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .status-ready {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+            border: 2px solid rgba(40, 167, 69, 0.3);
+        }
+
+        .status-updating {
+            background: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
+            border: 2px solid rgba(255, 193, 7, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        .status-success {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+            border: 2px solid rgba(40, 167, 69, 0.3);
+        }
+
+        .status-error {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            border: 2px solid rgba(220, 53, 69, 0.3);
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .log-container {
+            background: #2d3748;
+            color: #e2e8f0;
+            border-radius: 15px;
+            padding: 25px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 2px solid #4a5568;
+        }
+
+        .log-header {
+            color: #e2e8f0;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border-bottom: 1px solid #4a5568;
+            padding-bottom: 10px;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 8px 0;
+            border-bottom: 1px solid #4a5568;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .log-timestamp {
+            color: #38b2ac;
+            font-weight: bold;
+        }
+
+        .log-level {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            margin: 0 8px;
+            font-weight: bold;
+        }
+
+        .log-info {
+            background: #3182ce;
+            color: white;
+        }
+
+        .log-success {
+            background: #38a169;
+            color: white;
+        }
+
+        .log-warning {
+            background: #d69e2e;
+            color: white;
+        }
+
+        .log-error {
+            background: #e53e3e;
+            color: white;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            width: 0%;
+            animation: progressPulse 2s infinite;
+        }
+
+        @keyframes progressPulse {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                padding: 30px 20px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .update-btn {
+                padding: 15px 30px;
+                font-size: 1.1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎢 USJ 벡터 DB 업데이트</h1>
+            <p>간단하고 빠른 업데이트 시스템</p>
+        </div>
+
+        <div class="update-section">
+            <button class="update-btn" onclick="startUpdate()" id="updateBtn">
+                🔄 벡터 DB 업데이트 시작
+            </button>
+            
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-fill"></div>
+            </div>
+            
+            <div class="status-indicator status-ready" id="statusIndicator">
+                💚 업데이트 준비 완료
+            </div>
+        </div>
+
+        <div class="log-container">
+            <div class="log-header">📋 실시간 업데이트 로그</div>
+            <div id="logContent">
+                <div class="log-entry">
+                    <span class="log-timestamp">[2025-01-10 12:00:00]</span>
+                    <span class="log-level log-info">INFO</span>
+                    <span>시스템 준비 완료</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>🎯 USJ 챗봇 벡터 DB 자동 업데이트 시스템</p>
+            <p><code>https://usj-chatbot.run.goorm.site</code></p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://usj-chatbot.run.goorm.site';
+        let updatePollingInterval;
+        let isUpdating = false;
+
+        // 로그 추가 함수
+        function addLog(message, level = 'info') {
+            const logContent = document.getElementById('logContent');
+            const timestamp = new Date().toLocaleString('ko-KR');
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `
+                <span class="log-timestamp">[${timestamp}]</span>
+                <span class="log-level log-${level}">${level.toUpperCase()}</span>
+                <span>${message}</span>
+            `;
+            
+            logContent.insertBefore(logEntry, logContent.firstChild);
+            
+            // 로그 개수 제한 (최대 30개)
+            while (logContent.children.length > 30) {
+                logContent.removeChild(logContent.lastChild);
+            }
+            
+            // 스크롤을 맨 위로
+            logContent.scrollTop = 0;
+        }
+
+        // 상태 업데이트 함수
+        function updateStatus(status, message) {
+            const indicator = document.getElementById('statusIndicator');
+            const btn = document.getElementById('updateBtn');
+            const progressBar = document.getElementById('progressBar');
+            
+            indicator.className = `status-indicator status-${status}`;
+            
+            switch(status) {
+                case 'ready':
+                    indicator.innerHTML = '💚 업데이트 준비 완료';
+                    btn.innerHTML = '🔄 벡터 DB 업데이트 시작';
+                    btn.disabled = false;
+                    progressBar.style.display = 'none';
+                    break;
+                case 'updating':
+                    indicator.innerHTML = '🔄 업데이트 진행 중...';
+                    btn.innerHTML = '<span class="loading-spinner"></span>업데이트 중...';
+                    btn.disabled = true;
+                    progressBar.style.display = 'block';
+                    break;
+                case 'success':
+                    indicator.innerHTML = '✅ 업데이트 완료!';
+                    btn.innerHTML = '🔄 벡터 DB 업데이트 시작';
+                    btn.disabled = false;
+                    progressBar.style.display = 'none';
+                    break;
+                case 'error':
+                    indicator.innerHTML = '❌ 업데이트 실패';
+                    btn.innerHTML = '🔄 다시 시도';
+                    btn.disabled = false;
+                    progressBar.style.display = 'none';
+                    break;
+            }
+        }
+
+        // API 호출 함수
+        async function apiCall(endpoint, method = 'GET') {
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('API 호출 오류:', error);
+                throw error;
+            }
+        }
+
+        // 상태 확인 함수
+        async function checkStatus() {
+            try {
+                const status = await apiCall('/vector-update-status');
+                
+                if (status.is_updating && !isUpdating) {
+                    // 업데이트가 진행 중인데 클라이언트가 모르고 있던 경우
+                    isUpdating = true;
+                    updateStatus('updating');
+                    addLog('진행 중인 업데이트 감지됨', 'warning');
+                    startPolling();
+                } else if (!status.is_updating && isUpdating) {
+                    // 업데이트가 완료된 경우
+                    isUpdating = false;
+                    stopPolling();
+                    
+                    const lastStatus = status.last_update_status;
+                    if (lastStatus && lastStatus.status === 'success') {
+                        updateStatus('success');
+                        addLog('✨ 벡터 DB 업데이트 완료!', 'success');
+                        
+                        // 3초 후 준비 상태로 돌아가기
+                        setTimeout(() => {
+                            updateStatus('ready');
+                        }, 3000);
+                    } else if (lastStatus && lastStatus.status === 'error') {
+                        updateStatus('error');
+                        addLog(`❌ 업데이트 실패: ${lastStatus.message}`, 'error');
+                    }
+                }
+                
+            } catch (error) {
+                addLog(`상태 확인 오류: ${error.message}`, 'error');
+            }
+        }
+
+        // 업데이트 시작 함수
+        async function startUpdate() {
+            if (isUpdating) return;
+            
+            addLog('🚀 벡터 DB 업데이트 요청 시작...', 'info');
+            updateStatus('updating');
+            isUpdating = true;
+            
+            try {
+                const result = await apiCall('/update-vector-db', 'POST');
+                
+                if (result.status === 'started') {
+                    addLog('✅ 업데이트 요청 성공 - 백그라운드에서 진행 중', 'success');
+                    startPolling();
+                } else if (result.status === 'already_running') {
+                    addLog('⚠️ 이미 업데이트가 진행 중입니다', 'warning');
+                    startPolling();
+                } else {
+                    throw new Error('알 수 없는 응답: ' + result.status);
+                }
+                
+            } catch (error) {
+                addLog(`❌ 업데이트 요청 실패: ${error.message}`, 'error');
+                updateStatus('error');
+                isUpdating = false;
+            }
+        }
+
+        // 폴링 시작
+        function startPolling() {
+            if (updatePollingInterval) return;
+            
+            addLog('⏳ 업데이트 진행 상황 모니터링 시작', 'info');
+            updatePollingInterval = setInterval(checkStatus, 3000); // 3초마다 확인
+        }
+
+        // 폴링 중지
+        function stopPolling() {
+            if (updatePollingInterval) {
+                clearInterval(updatePollingInterval);
+                updatePollingInterval = null;
+                addLog('✋ 모니터링 중지', 'info');
+            }
+        }
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('🎯 USJ 벡터 DB 업데이트 시스템 초기화 완료', 'success');
+            
+            // 초기 상태 확인
+            checkStatus();
+        });
+
+        // 페이지 언로드 시 정리
+        window.addEventListener('beforeunload', function() {
+            stopPolling();
+        });
+
+        // 키보드 단축키 (Ctrl+U로 업데이트)
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'u') {
+                e.preventDefault();
+                if (!isUpdating) {
+                    startUpdate();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
